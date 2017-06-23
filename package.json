@@ -4,5 +4,9 @@
     "description": "BioGram Server Powered By Ali.Khazaee",
     "main": "App.js",
     "author": "Ali.Khazaee",
-    "license": "Khazaee"
+    "license": "Khazaee",
+    "dependencies":
+    {
+        "express": "^4.15.3"
+    }
 }
