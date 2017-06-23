@@ -1,0 +1,8 @@
+{
+    "name": "biogram",
+    "version": "0.0.0",
+    "description": "BioGram Server Powered By Ali.Khazaee",
+    "main": "App.js",
+    "author": "Ali.Khazaee",
+    "license": "Khazaee"
+}
