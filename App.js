@@ -1,15 +1,15 @@
 var express     = require('express');
-var app         = express();
+var App         = express();
 var bodyParser  = require('body-parser');
 
-app.disable("x-powered-by");
+App.disable("x-powered-by");
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+App.use(bodyParser.urlencoded({ extended: true }));
+App.use(bodyParser.json());
 
-app.post('/', function(req, res)
-{
-    res.sendStatus(200);
-});
+App.use('/', require('./System/Route/Post'));
+App.use('/', require('./System/Route/Profile'));
 
-app.listen(1000, function() { console.log("Running Server Port: 1000"); });
+App.listen(1000, function() { console.log("Running Server Port: 1000"); });
+
+module.exports = App;
