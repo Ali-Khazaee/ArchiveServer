@@ -4,5 +4,11 @@
     "description": "BioGram Server Powered By Ali.Khazaee",
     "main": "App.js",
     "author": "Ali.Khazaee",
-    "license": "Khazaee"
+    "license": "Khazaee",
+    "dependencies": {
+        "body-parser": "^1.17.2",
+        "express": "^4.15.3",
+        "express-jwt": "^5.3.0",
+        "mongoose": "^4.11.1"
+    }
 }
