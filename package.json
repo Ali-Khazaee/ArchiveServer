@@ -1,6 +1,6 @@
 {
     "name": "biogram",
-    "version": "0.0.0",
+    "version": "0.1.0",
     "description": "BioGram Server Powered By Ali.Khazaee",
     "main": "App.js",
     "author": "Ali.Khazaee",
@@ -8,8 +8,7 @@
     "dependencies": {
         "body-parser": "^1.17.2",
         "express": "^4.15.3",
-        "express-jwt": "^5.3.0",
-        "mongodb": "^2.2.29",
-        "mongoose": "^4.11.1"
+        "jsonwebtoken": "^7.4.1",
+        "mongodb": "^2.2.31"
     }
 }
