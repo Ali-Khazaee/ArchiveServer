@@ -1,21 +1,28 @@
-var express = require('express');
-var jwt = require('jsonwebtoken');
-var AuthConfig = require('../Config/Auth');
+var AuthRouter = require('express').Router();
 
-var AuthRouter = express.Router();
-
-AuthRouter.post('/signin', function(req, res)
+AuthRouter.post('/UsernameIsAvailable', function(req, res)
 {
-    res.json(
-    {
-        id: 1,
-        username: 'admin',
-        jwt: jwt.sign(
-        {
-            id: 1,
-        }, AuthConfig.JWT_SECRET, { expiresIn: 60*60 }),
-        verify: jwt.verify('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNDk5Mjc5NDA4LCJleHAiOjE0OTkyODMwMDh9.G2BaryvqhNpseHhR8gGVylbEEG8hcWOT1LD9Bi_BcLE', AuthConfig.JWT_SECRET)
-    });
+    var Username = req.body.Username;
+
+    if (typeof Username === 'undefined' || Username === '')
+        return res.json({ Message: 1 });
+
+    if (Username.length < 3)
+        return res.json({ Message: 2 });
+
+    if (Username.length > 32)
+        return res.json({ Message: 3 });
+
+    Username = Username.toLowerCase();
+
+    if (Username.search(/^(?![^a-z])(?!.*([_.])\1)[\w.]*[a-z]$/) === -1)
+        return res.json({ Message: 4 });
+
+    //if (empty($App->DB->Find('account', ['Username' => $Username], ["projection" => ["_id" => 1]])->toArray()))
+        //res.json({ Message: 1000 });
+
+    res.json({ Message: 5 });
 });
+
 
 module.exports = AuthRouter;

@@ -1,4 +1,1 @@
-module.exports = {
-    PORT: 8080,
-    JWT_SECRET: '55555'
-};
+module.exports = { JWT_SECRET: '55555' };

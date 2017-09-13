@@ -6,9 +6,11 @@
     "author": "Ali.Khazaee",
     "license": "Khazaee",
     "dependencies": {
-        "body-parser": "^1.17.2",
         "express": "^4.15.3",
+        "body-parser": "^1.17.2",
+
         "jsonwebtoken": "^7.4.1",
-        "mongodb": "^2.2.31"
+        "mongodb": "^2.2.31",
+        "socket.io": "^2.0.3"
     }
 }
