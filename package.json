@@ -5,12 +5,10 @@
     "main": "App.js",
     "author": "Ali.Khazaee",
     "license": "Khazaee",
-    "dependencies": {
+    "dependencies":
+    {
         "express": "^4.15.3",
         "body-parser": "^1.17.2",
-
-        "jsonwebtoken": "^7.4.1",
-        "mongodb": "^2.2.31",
-        "socket.io": "^2.0.3"
+        "mongodb": "^2.2.31"
     }
 }
