@@ -1,13 +1,3 @@
-var express = require('express');
+var NotificationRouter = require('express').Router();
 
-var PostRouter = express.Router();
-
-PostRouter.post('/post', function(req, res) {
-    res.send(' /post');
-});
-
-PostRouter.post('/post2', function(req, res) {
-    res.send(' /post2');
-});
-
-module.exports = PostRouter;
+module.exports = NotificationRouter;

@@ -24,7 +24,7 @@ AuthRouter.post('/UsernameIsAvailable', RateLimit(2, 60), function(req, res)
     {
         if (error)
         {
-            Misc.Log(error);
+            Misc.FileLog(error);
             return res.json({ Message: -1 });
         }
 
@@ -57,7 +57,7 @@ AuthRouter.post('/SignUp', RateLimit(2, 60), function(req, res)
     {
         if (error)
         {
-            Misc.Log(error);
+            Misc.FileLog(error);
             return res.json({ Message: -1 });
         }
 

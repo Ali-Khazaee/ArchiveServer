@@ -12,7 +12,7 @@ function RateLimit(Count, ExpireTime)
         {
             if (error)
             {
-                Misc.Log(error);
+                Misc.FileLog(error);
                 return res.json({ Message: -1 });
             }
 
@@ -31,7 +31,10 @@ function RateLimit(Count, ExpireTime)
             }
 
             if (result.value.Count > Count)
+            {
+                Misc.FileLog(IP + " Exceed Request " + URL);
                 return res.json({ Message: -2 });
+            }
 
             next();
         });

@@ -1,13 +1,3 @@
-var express = require('express');
+var FollowRouter = require('express').Router();
 
-var ProfileRouter = express.Router();
-
-ProfileRouter.post('/profile', function(req, res) {
-    res.send(' /profile');
-});
-
-ProfileRouter.post('/profile2', function(req, res) {
-    res.send(' /profile2');
-});
-
-module.exports = ProfileRouter;
+module.exports = FollowRouter;

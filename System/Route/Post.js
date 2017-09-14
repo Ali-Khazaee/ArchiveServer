@@ -1,6 +1,3 @@
-var express = require('express');
-
-var PostRouter = express.Router();
-
+var PostRouter = require('express').Router();
 
 module.exports = PostRouter;

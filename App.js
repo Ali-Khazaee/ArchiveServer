@@ -3,19 +3,20 @@ var BodyParser     = require('body-parser');
 var CoreConfig     = require("./System/Config/Core");
 var MongoDB        = require('mongodb');
 var DataBaseConfig = require('./System/Config/DataBase');
+var Misc           = require('./System/Handler/Misc');
 
 MongoDB.MongoClient.connect('mongodb://' + DataBaseConfig.USERNAME + ':' + DataBaseConfig.PASSWORD + '@' + DataBaseConfig.HOST + ':' + DataBaseConfig.PORT + '/' + DataBaseConfig.DATABASE, function(error, database)
 {
     if (error)
     {
-        console.log(err);
+        Misc.FileLog(err);
         process.exit(1);
     }
 
     global.DB = database;
     global.MongoID = MongoDB.ObjectID;
 
-    console.log('MongoDB Connected');
+    Misc.Log('MongoDB Connected');
 
     App.disable("x-powered-by");
 
@@ -31,7 +32,7 @@ MongoDB.MongoClient.connect('mongodb://' + DataBaseConfig.USERNAME + ':' + DataB
 
     App.listen(CoreConfig.PORT, "127.0.0.1", function()
     {
-        console.log("Running Server Port: " + CoreConfig.PORT);
+        Misc.Log("Running Server Port: " + CoreConfig.PORT);
     });
 });
 

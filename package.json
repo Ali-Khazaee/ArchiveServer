@@ -5,10 +5,10 @@
     "main": "App.js",
     "author": "Ali.Khazaee",
     "license": "Khazaee",
-    "dependencies":
-    {
-        "express": "^4.15.3",
+    "dependencies": {
         "body-parser": "^1.17.2",
-        "mongodb": "^2.2.31"
+        "express": "^4.15.3",
+        "mongodb": "^2.2.31",
+        "winston": "^2.3.1"
     }
 }
