@@ -1,4 +1,4 @@
-var File = require('fs');
+var DB = require('./DataBase');
 
 function RateLimit(Count, Time)
 {
@@ -8,21 +8,7 @@ function RateLimit(Count, Time)
         var URL = req.originalUrl.substr(1);
 
 
-        /*File.readFile(IP, function(Error, data)
-        {
-            if (Error)
-            {
-                File.open(IP, 'w', function (err, file)
-                {
-                    if (err)
-                        throw err;
 
-                    file.write("salam");
-
-                    console.log('Saved!');
-                });
-            }
-        });*/
 
         console.log(IP + " -- " + URL);
 
