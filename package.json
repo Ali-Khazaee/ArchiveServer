@@ -6,8 +6,10 @@
     "author": "Ali.Khazaee",
     "license": "Khazaee",
     "dependencies": {
+        "bcrypt": "^1.0.3",
         "body-parser": "^1.17.2",
         "express": "^4.15.3",
+        "jsonwebtoken": "^8.0.1",
         "mongodb": "^2.2.31",
         "winston": "^2.3.1"
     }

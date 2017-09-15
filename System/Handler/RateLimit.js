@@ -6,7 +6,7 @@ function RateLimit(Count, ExpireTime)
     {
         var IP = req.connection.remoteAddress;
         var URL = req.originalUrl.substr(1);
-        var Time = Math.floor(Date.now() / 1000);
+        var Time = Misc.Time;
 
         DB.collection("ratelimit").findOneAndUpdate({ IP: IP, URL: URL }, { $inc: { Count: 1 } }, function(error, result)
         {

@@ -39,5 +39,6 @@ MongoDB.MongoClient.connect('mongodb://' + DataBaseConfig.USERNAME + ':' + DataB
 /*
     -1 = DB Error
     -2 = RateLimit Exceed
-    -3 = Auth Failed
+    -3 = BCrypt Hash Failed
+    -4 = Auth Failed
  */
