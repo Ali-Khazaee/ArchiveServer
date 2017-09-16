@@ -23,7 +23,7 @@ AuthRouter.post('/UsernameIsAvailable', RateLimit(60, 60), function(req, res)
     if (Username.search(/^(?![^a-z])(?!.*([_.])\1)[\w.]*[a-z]$/) === -1)
         return res.json({ Message: 4 });
 
-    DB.collection("account").findOne({ Username: Username }, function(error, result)
+    DB.collection("account").findOne({ Username: Username }, { _id: 1 }, function(error, result)
     {
         if (error)
         {
@@ -78,7 +78,7 @@ AuthRouter.post('/SignUp', RateLimit(30, 60), function(req, res)
     if (Misc.IsValidEmail(Email))
         return res.json({ Message: 9 });
 
-    DB.collection("account").findOne({ Username: Username }, function(error, result)
+    DB.collection("account").findOne({ Username: Username }, { _id: 1 }, function(error, result)
     {
         if (error)
         {
@@ -96,7 +96,7 @@ AuthRouter.post('/SignUp', RateLimit(30, 60), function(req, res)
         else
             Session = Session + " - " + IP;
 
-        BCrypt.hash(Password, 8, function(error1, Hash)
+        BCrypt.hash(Password, 8, function(error1, result1)
         {
             if (error1)
             {
@@ -106,7 +106,7 @@ AuthRouter.post('/SignUp', RateLimit(30, 60), function(req, res)
 
             var Time = Misc.Time;
 
-            DB.collection("account").insertOne({ Username: Username, Password: Hash, Email: Email, CreatedTime: Time, LastOnline: Time }, function(error2, result1)
+            DB.collection("account").insertOne({ Username: Username, Password: result1, Email: Email, CreatedTime: Time, LastOnline: Time }, function(error2, result2)
             {
                 if (error2)
                 {
@@ -114,7 +114,7 @@ AuthRouter.post('/SignUp', RateLimit(30, 60), function(req, res)
                     return res.json({ Message: -1 });
                 }
 
-                JWT.sign({ ID: result1.insertedId, exp : Time + 31536000 }, AuthConfig.PRIVATE_KEY, function(error3, token)
+                JWT.sign({ ID: result2.insertedId, exp : Time + 31536000 }, AuthConfig.PRIVATE_KEY, function(error3, result3)
                 {
                     if (error3)
                     {
@@ -122,9 +122,9 @@ AuthRouter.post('/SignUp', RateLimit(30, 60), function(req, res)
                         return res.json({ Message: -4 });
                     }
 
-                    DB.collection("account").updateOne({ _id: result1.insertedId }, { $push: { Session: { Name: Session, Token: token, CreatedTime: Time } } });
+                    DB.collection("account").updateOne({ _id: result2.insertedId }, { $push: { Session: { Name: Session, Token: result3, CreatedTime: Time } } });
 
-                    res.json({ Message: 0, TOKEN: token, ID: result1.insertedId, USERNAME: Username });
+                    res.json({ Message: 0, TOKEN: result3, ID: result2.insertedId, USERNAME: Username });
                 });
             });
         });
@@ -162,7 +162,7 @@ AuthRouter.post('/SignIn', RateLimit(30, 60), function(req, res)
 
     Password = Password.toLowerCase();
 
-    DB.collection("account").findOne({ Username: Username }, function(error, result)
+    DB.collection("account").findOne({ Username: Username }, { _id: 1, Password: 1 }, function(error, result)
     {
         if (error)
         {
@@ -175,7 +175,7 @@ AuthRouter.post('/SignIn', RateLimit(30, 60), function(req, res)
 
         var Hash = result.Password.replace('$2y$', '$2a$');
 
-        BCrypt.compare(Password, Hash, function(error1, result2)
+        BCrypt.compare(Password, Hash, function(error1, result1)
         {
             if (error1)
             {
@@ -183,12 +183,12 @@ AuthRouter.post('/SignIn', RateLimit(30, 60), function(req, res)
                 return res.json({ Message: -3 });
             }
 
-            if (result2 === false)
+            if (result1 === false)
                 return res.json({ Message: 9 });
 
             var Time = Misc.Time;
 
-            JWT.sign({ ID: result._id, exp : Time + 31536000 }, AuthConfig.PRIVATE_KEY, function(error2, token)
+            JWT.sign({ ID: result._id, exp : Time + 31536000 }, AuthConfig.PRIVATE_KEY, function(error2, result2)
             {
                 if (error2)
                 {
@@ -203,12 +203,88 @@ AuthRouter.post('/SignIn', RateLimit(30, 60), function(req, res)
                 else
                     Session = Session + " - " + IP;
 
-                DB.collection("account").updateOne({ _id: new MongoID(result._id) }, { $push: { Session: { Name: Session, Token: token, CreatedTime: Time } } });
+                DB.collection("account").updateOne({ _id: new MongoID(result._id) }, { $push: { Session: { Name: Session, Token: result2, CreatedTime: Time } } });
 
-                res.json({ Message: 0, TOKEN: token, ID: result._id, USERNAME: Username });
+                res.json({ Message: 0, TOKEN: result2, ID: result._id, USERNAME: Username });
             });
         });
     });
+});
+
+AuthRouter.post('/ResetPassword', RateLimit(30, 60), function(req, res)
+{
+    var EmailOrUsername = req.body.EmailOrUsername;
+
+    if (typeof EmailOrUsername === 'undefined' || EmailOrUsername === '')
+        return res.json({ Message: 1 });
+
+    EmailOrUsername = EmailOrUsername.toLowerCase();
+
+    if (Misc.IsValidEmail(EmailOrUsername))
+    {
+        if (EmailOrUsername.search(/^(?![^a-z])(?!.*([_.])\1)[\w.]*[a-z]$/) === -1)
+            return res.json({ Message: 2 });
+
+        DB.collection("account").findOne({ Username: EmailOrUsername }, { _id: 1, Email: 1 }, function(error, result)
+        {
+            if (error)
+            {
+                Misc.FileLog(error);
+                return res.json({ Message: -1 });
+            }
+
+            if (result === null)
+                return res.json({ Message: 3 });
+
+            var RandomString = Misc.RandomString(25);
+
+            DB.collection("recovery_password").insertOne({ ID: result._id, Data: EmailOrUsername, Key: RandomString, CreatedTime: Misc.Time });
+
+            var URL = "http://recovery.biogram.co/RecoveryPassword/" + RandomString;
+            var To = EmailOrUsername + " <" + result.Email + ">";
+            var Subject = "[Biogram] Please reset your password";
+            var Body = "<p>We heard that you lost your GitHub password. Sorry about that!</p>" +
+                       "<p>But don't worry! You can use the following link within the 3 hours to reset your password:</p>" +
+                       "<a href='" + URL + "'>" + URL + "</a>" +
+                       "If you don't use this link within 3 hours, it will expire" +
+                       "Thanks," +
+                       "Your friends at Biogram";
+
+            Misc.SendEmail(To, Subject, Body);
+
+            res.json({ Message: 0 });
+        });
+    }
+    else
+    {
+        DB.collection("account").findOne({ Email: EmailOrUsername }, { _id: 1, Username: 1 }, function(error, result)
+        {
+            if (error)
+            {
+                Misc.FileLog(error);
+                return res.json({ Message: -1 });
+            }
+
+            if (result === null)
+                return res.json({ Message: 3 });
+
+            DB.collection("recovery_password").insertOne({ ID: result._id, Data: EmailOrUsername, Key: RandomString, CreatedTime: Misc.Time });
+
+            var URL = "http://recovery.biogram.co/RecoveryPassword/" + RandomString;
+            var To = result.Username + " <" + EmailOrUsername + ">";
+            var Subject = "[Biogram] Please reset your password";
+            var Body = "<p>We heard that you lost your GitHub password. Sorry about that!</p>" +
+                "<p>But don't worry! You can use the following link within the 3 hours to reset your password:</p>" +
+                "<a href='" + URL + "'>" + URL + "</a>" +
+                "If you don't use this link within 3 hours, it will expire" +
+                "Thanks," +
+                "Your friends at Biogram";
+
+            Misc.SendEmail(To, Subject, Body);
+
+            res.json({ Message: 0 });
+        });
+    }
 });
 
 module.exports = AuthRouter;

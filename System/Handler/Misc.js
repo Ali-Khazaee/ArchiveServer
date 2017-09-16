@@ -1,4 +1,5 @@
 var Winston = require('winston');
+var NodeMailer = require('nodemailer');
 
 Winston.add(Winston.transports.File, { filename: './System/Storage/Debug.log' });
 
@@ -30,7 +31,34 @@ function isValidEmail(Email)
     return Parts[1].split(".").some(function(Part) { return Part.length > 63; });
 }
 
+function SendEmail(Email, Subject, Body)
+{
+    var Transporter = NodeMailer.createTransport({ service: 'mail.biogram.co', auth: { user: 'no-reply@biogram.co', pass: 'K01kTl45' } });
+    var MailOptions = { from: 'no-reply@biogram.co', to: Email, subject: Subject, html: Body };
+
+    Transporter.sendMail(MailOptions, function(error, info)
+    {
+        if (error)
+            FileLog(error);
+        else
+            Log('Email Sent: ' + info.response);
+    });
+}
+
+function randomString(Count)
+{
+    var Result = "";
+    var Possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for (var I = 0; I < Count; I++)
+        Result += Possible.charAt(Math.floor(Math.random() * Possible.length));
+
+    return Result;
+}
+
 module.exports.Log = Log;
 module.exports.FileLog = FileLog;
 module.exports.IsValidEmail = isValidEmail;
 module.exports.Time = Math.floor(Date.now() / 1000);
+module.exports.SendEmail = SendEmail;
+module.exports.RandomString = randomString;
