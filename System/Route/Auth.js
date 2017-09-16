@@ -131,7 +131,84 @@ AuthRouter.post('/SignUp', RateLimit(30, 60), function(req, res)
     });
 });
 
-// nodeGeneratedHash.replace('$2a$', '$2y$');
-// bcrypt.compare(myPlaintextPassword, hash, function(err, res) {    // res == true });
+AuthRouter.post('/SignIn', RateLimit(30, 60), function(req, res)
+{
+    var Username = req.body.Username;
+    var Password = req.body.Password;
+    var Session = req.body.Session;
+
+    if (typeof Username === 'undefined' || Username === '')
+        return res.json({ Message: 1 });
+
+    if (Username.length < 3)
+        return res.json({ Message: 2 });
+
+    if (Username.length > 32)
+        return res.json({ Message: 3 });
+
+    Username = Username.toLowerCase();
+
+    if (Username.search(/^(?![^a-z])(?!.*([_.])\1)[\w.]*[a-z]$/) === -1)
+        return res.json({ Message: 4 });
+
+    if (typeof Password === 'undefined' || Password === '')
+        return res.json({ Message: 5 });
+
+    if (Password.length < 5)
+        return res.json({ Message: 6 });
+
+    if (Password.length > 32)
+        return res.json({ Message: 7 });
+
+    Password = Password.toLowerCase();
+
+    DB.collection("account").findOne({ Username: Username }, function(error, result)
+    {
+        if (error)
+        {
+            Misc.FileLog(error);
+            return res.json({ Message: -1 });
+        }
+
+        if (result === null)
+            return res.json({ Message: 8 });
+
+        var Hash = result.Password.replace('$2y$', '$2a$');
+
+        BCrypt.compare(Password, Hash, function(error1, result2)
+        {
+            if (error1)
+            {
+                Misc.FileLog(error1);
+                return res.json({ Message: -3 });
+            }
+
+            if (result2 === false)
+                return res.json({ Message: 9 });
+
+            var Time = Misc.Time;
+
+            JWT.sign({ ID: result._id, exp : Time + 31536000 }, AuthConfig.PRIVATE_KEY, function(error2, token)
+            {
+                if (error2)
+                {
+                    Misc.FileLog(error2);
+                    return res.json({ Message: -4 });
+                }
+
+                var IP = req.connection.remoteAddress;
+
+                if (typeof Session === 'undefined' || Session === '')
+                    Session = "Unknown Session - " + IP;
+                else
+                    Session = Session + " - " + IP;
+
+                DB.collection("account").updateOne({ _id: new MongoID(result._id) }, { $push: { Session: { Name: Session, Token: token, CreatedTime: Time } } });
+
+                res.json({ Message: 0, TOKEN: token, ID: result._id, USERNAME: Username });
+            });
+        });
+    });
+});
 
 module.exports = AuthRouter;
