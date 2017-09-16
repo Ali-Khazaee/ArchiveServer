@@ -2,6 +2,7 @@ var AuthRouter = require('express').Router();
 var RateLimit  = require('../Handler/RateLimit');
 var BCrypt     = require('bcrypt');
 var JWT        = require('jsonwebtoken');
+var Auth       = require('../Handler/Auth');
 var Misc       = require('../Handler/Misc');
 var AuthConfig = require('../Config/Auth');
 
@@ -114,7 +115,7 @@ AuthRouter.post('/SignUp', RateLimit(30, 60), function(req, res)
                     return res.json({ Message: -1 });
                 }
 
-                JWT.sign({ ID: result2.insertedId, exp : Time + 31536000 }, AuthConfig.PRIVATE_KEY, function(error3, result3)
+                JWT.sign({ ID: result2.insertedId, exp : Time + 15768000 }, AuthConfig.PRIVATE_KEY, function(error3, result3)
                 {
                     if (error3)
                     {
@@ -188,7 +189,7 @@ AuthRouter.post('/SignIn', RateLimit(30, 60), function(req, res)
 
             var Time = Misc.Time;
 
-            JWT.sign({ ID: result._id, exp : Time + 31536000 }, AuthConfig.PRIVATE_KEY, function(error2, result2)
+            JWT.sign({ ID: result._id, exp : Time + 15768000 }, AuthConfig.PRIVATE_KEY, function(error2, result2)
             {
                 if (error2)
                 {
@@ -285,6 +286,83 @@ AuthRouter.post('/ResetPassword', RateLimit(30, 60), function(req, res)
             res.json({ Message: 0 });
         });
     }
+});
+
+AuthRouter.post('/ChangePassword', Auth(), RateLimit(30, 60), function(req, res)
+{
+    res.json({ Message: 111111 })
+    /*var PasswordOld = req.body.PasswordOld;
+    var PasswordNew = req.body.PasswordNew;
+
+    if (typeof PasswordOld === 'undefined' || PasswordOld === '')
+        return res.json({ Message: 1 });
+
+    if (PasswordOld.length < 5)
+        return res.json({ Message: 2 });
+
+    if (PasswordOld.length > 32)
+        return res.json({ Message: 3 });
+
+    PasswordOld = PasswordOld.toLowerCase();
+
+    if (typeof PasswordNew === 'undefined' || PasswordNew === '')
+        return res.json({ Message: 4 });
+
+    if (PasswordNew.length < 5)
+        return res.json({ Message: 5 });
+
+    if (PasswordNew.length > 32)
+        return res.json({ Message: 6 });
+
+    PasswordNew = PasswordNew.toLowerCase();
+
+    DB.collection("account").findOne({ Username: Username }, { _id: 1, Password: 1 }, function(error, result)
+    {
+        if (error)
+        {
+            Misc.FileLog(error);
+            return res.json({ Message: -1 });
+        }
+
+        if (result === null)
+            return res.json({ Message: 8 });
+
+        var Hash = result.Password.replace('$2y$', '$2a$');
+
+        BCrypt.compare(Password, Hash, function(error1, result1)
+        {
+            if (error1)
+            {
+                Misc.FileLog(error1);
+                return res.json({ Message: -3 });
+            }
+
+            if (result1 === false)
+                return res.json({ Message: 9 });
+
+            var Time = Misc.Time;
+
+            JWT.sign({ ID: result._id, exp : Time + 15768000 }, AuthConfig.PRIVATE_KEY, function(error2, result2)
+            {
+                if (error2)
+                {
+                    Misc.FileLog(error2);
+                    return res.json({ Message: -4 });
+                }
+
+                var IP = req.connection.remoteAddress;
+
+                if (typeof Session === 'undefined' || Session === '')
+                    Session = "Unknown Session - " + IP;
+                else
+                    Session = Session + " - " + IP;
+
+                DB.collection("account").updateOne({ _id: new MongoID(result._id) }, { $push: { Session: { Name: Session, Token: result2, CreatedTime: Time } } });
+
+                res.json({ Message: 0, TOKEN: result2, ID: result._id, USERNAME: Username });
+            });
+        });
+    });*/
 });
 
 module.exports = AuthRouter;
