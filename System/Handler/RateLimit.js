@@ -16,7 +16,7 @@ function RateLimit(Count, ExpireTime)
                 return res.json({ Message: -1 });
             }
 
-            if (result === null || result.value === null)
+            if (result.value === null)
             {
                 DB.collection("ratelimit").insertOne({ IP: IP, URL: URL, Count: 1, Time: Time + ExpireTime });
                 next();

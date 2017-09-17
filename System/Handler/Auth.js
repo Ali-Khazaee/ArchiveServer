@@ -40,14 +40,9 @@ function Verify(Token)
     return Verifier.verify(AuthConfig.PUBLIC_KEY, Signature, 'base64');
 }
 
-function Base64Encode(Message)
-{
-    return StringReplace('=', '', StringTrim(Buffer.from(Message), 'base64'), '+/', '-_'));
-}
-
 function CreateToken(ID)
 {
-    var Segment = Base64Encode(JSON.stringify({ ID: ID, exp : Misc.Time + 15768000 }));
+    var Segment = StringReplace('=', '', StringTrim(Buffer.from(JSON.stringify({ ID: ID, exp : Misc.Time + 15768000 }).toString()).toString('base64'), '+/', '-_'));
 
     var Signer = Crypto.createSign('sha256');
     Signer.update(Segment);
@@ -59,7 +54,7 @@ function Auth()
 {
     return function(req, res, next)
     {
-        var Token = req.headers['token'];
+        var Token = req.headers.token;
 
         if (typeof Token === 'undefined' || Token === '' || Token.split('.').length < 1)
             return res.json({ Message: -4 });
@@ -72,26 +67,14 @@ function Auth()
                 return res.json({ Message: -1 });
             }
 
-            if (result !== null)
+            if (result !== null || !Verify(Token))
                 return res.json({ Message: -4 });
 
-            JWT.verify(Token, AuthConfig.PUBLIC_KEY, { algorithms: ['SHA256'] }, function(error1, result1)
-            {
-                if (error1)
-                {
-                    Misc.FileLog(error1);
-                    return res.json({ Message: -4 });
-                }
+            res.locals.ID = JSON.parse(new Buffer(Token.split('.')[0], 'base64').toString('ascii')).ID;
 
-                if (typeof result1 === 'undefined' || result1 === '')
-                    return res.json({ Message: -4 });
-
-                console.log(result1);
-
-                next();
-            });
+            next();
         });
-    }
+    };
 }
 
 module.exports = Auth;

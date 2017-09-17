@@ -15,7 +15,7 @@ function FileLog(Message)
 
 var EmailPattern = /^[-!#$%&'*+\/0-9=?A-Z^_a-z{|}~](\.?[-!#$%&'*+\/0-9=?A-Z^_a-z`{|}~])*@[a-zA-Z0-9](-?\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$/;
 
-function isValidEmail(Email)
+function IsValidEmail(Email)
 {
     if (!Email || Email.length > 254)
         return true;
@@ -45,7 +45,7 @@ function SendEmail(Email, Subject, Body)
     });
 }
 
-function randomString(Count)
+function RandomString(Count)
 {
     var Result = "";
     var Possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -58,7 +58,7 @@ function randomString(Count)
 
 module.exports.Log = Log;
 module.exports.FileLog = FileLog;
-module.exports.IsValidEmail = isValidEmail;
+module.exports.IsValidEmail = IsValidEmail;
 module.exports.Time = Math.floor(Date.now() / 1000);
 module.exports.SendEmail = SendEmail;
-module.exports.RandomString = randomString;
+module.exports.RandomString = RandomString;

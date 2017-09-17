@@ -1,7 +1,6 @@
 var AuthRouter = require('express').Router();
 var RateLimit  = require('../Handler/RateLimit');
 var BCrypt     = require('bcrypt');
-var JWT        = require('jsonwebtoken');
 var Auth       = require('../Handler/Auth');
 var Misc       = require('../Handler/Misc');
 var AuthConfig = require('../Config/Auth');
@@ -114,6 +113,8 @@ AuthRouter.post('/SignUp', RateLimit(30, 60), function(req, res)
                     Misc.FileLog(error2);
                     return res.json({ Message: -1 });
                 }
+
+                var Token = Auth.CreateToken(result2.insertedId);
 
                 JWT.sign({ ID: result2.insertedId, exp : Time + 15768000 }, AuthConfig.PRIVATE_KEY, function(error3, result3)
                 {

@@ -9,7 +9,7 @@ MongoDB.MongoClient.connect('mongodb://' + DataBaseConfig.USERNAME + ':' + DataB
 {
     if (error)
     {
-        Misc.FileLog(err);
+        Misc.FileLog(error);
         process.exit(1);
     }
 
