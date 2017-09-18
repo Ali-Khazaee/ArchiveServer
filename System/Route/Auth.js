@@ -3,7 +3,6 @@ var RateLimit  = require('../Handler/RateLimit');
 var BCrypt     = require('bcrypt');
 var Auth       = require('../Handler/Auth');
 var Misc       = require('../Handler/Misc');
-var AuthConfig = require('../Config/Auth');
 
 AuthRouter.post('/UsernameIsAvailable', RateLimit(60, 60), function(req, res)
 {
@@ -116,18 +115,9 @@ AuthRouter.post('/SignUp', RateLimit(30, 60), function(req, res)
 
                 var Token = Auth.CreateToken(result2.insertedId);
 
-                JWT.sign({ ID: result2.insertedId, exp : Time + 15768000 }, AuthConfig.PRIVATE_KEY, function(error3, result3)
-                {
-                    if (error3)
-                    {
-                        Misc.FileLog(error3);
-                        return res.json({ Message: -4 });
-                    }
+                DB.collection("account").updateOne({ _id: result2.insertedId }, { $push: { Session: { Name: Session, Token: Token, CreatedTime: Time } } });
 
-                    DB.collection("account").updateOne({ _id: result2.insertedId }, { $push: { Session: { Name: Session, Token: result3, CreatedTime: Time } } });
-
-                    res.json({ Message: 0, TOKEN: result3, ID: result2.insertedId, USERNAME: Username });
-                });
+                res.json({ Message: 0, TOKEN: Token, ID: result2.insertedId, USERNAME: Username });
             });
         });
     });
@@ -189,26 +179,17 @@ AuthRouter.post('/SignIn', RateLimit(30, 60), function(req, res)
                 return res.json({ Message: 9 });
 
             var Time = Misc.Time;
+            var IP = req.connection.remoteAddress;
+            var Token = Auth.CreateToken(result2.insertedId);
 
-            JWT.sign({ ID: result._id, exp : Time + 15768000 }, AuthConfig.PRIVATE_KEY, function(error2, result2)
-            {
-                if (error2)
-                {
-                    Misc.FileLog(error2);
-                    return res.json({ Message: -4 });
-                }
+            if (typeof Session === 'undefined' || Session === '')
+                Session = "Unknown Session - " + IP;
+            else
+                Session = Session + " - " + IP;
 
-                var IP = req.connection.remoteAddress;
+            DB.collection("account").updateOne({ _id: new MongoID(result._id) }, { $push: { Session: { Name: Session, Token: Token, CreatedTime: Time } } });
 
-                if (typeof Session === 'undefined' || Session === '')
-                    Session = "Unknown Session - " + IP;
-                else
-                    Session = Session + " - " + IP;
-
-                DB.collection("account").updateOne({ _id: new MongoID(result._id) }, { $push: { Session: { Name: Session, Token: result2, CreatedTime: Time } } });
-
-                res.json({ Message: 0, TOKEN: result2, ID: result._id, USERNAME: Username });
-            });
+            res.json({ Message: 0, TOKEN: Token, ID: result._id, USERNAME: Username });
         });
     });
 });
@@ -291,8 +272,7 @@ AuthRouter.post('/ResetPassword', RateLimit(30, 60), function(req, res)
 
 AuthRouter.post('/ChangePassword', Auth(), RateLimit(30, 60), function(req, res)
 {
-    res.json({ Message: 111111 })
-    /*var PasswordOld = req.body.PasswordOld;
+    var PasswordOld = req.body.PasswordOld;
     var PasswordNew = req.body.PasswordNew;
 
     if (typeof PasswordOld === 'undefined' || PasswordOld === '')
@@ -317,7 +297,7 @@ AuthRouter.post('/ChangePassword', Auth(), RateLimit(30, 60), function(req, res)
 
     PasswordNew = PasswordNew.toLowerCase();
 
-    DB.collection("account").findOne({ Username: Username }, { _id: 1, Password: 1 }, function(error, result)
+    DB.collection("account").findOne({ _id: res.locals.ID }, { _id: 0, Password: 1 }, function(error, result)
     {
         if (error)
         {
@@ -326,11 +306,11 @@ AuthRouter.post('/ChangePassword', Auth(), RateLimit(30, 60), function(req, res)
         }
 
         if (result === null)
-            return res.json({ Message: 8 });
+            return res.json({ Message: 7 });
 
         var Hash = result.Password.replace('$2y$', '$2a$');
 
-        BCrypt.compare(Password, Hash, function(error1, result1)
+        BCrypt.compare(PasswordOld, Hash, function(error1, result1)
         {
             if (error1)
             {
@@ -339,31 +319,117 @@ AuthRouter.post('/ChangePassword', Auth(), RateLimit(30, 60), function(req, res)
             }
 
             if (result1 === false)
-                return res.json({ Message: 9 });
+                return res.json({ Message: 8 });
 
-            var Time = Misc.Time;
-
-            JWT.sign({ ID: result._id, exp : Time + 15768000 }, AuthConfig.PRIVATE_KEY, function(error2, result2)
+            BCrypt.hash(PasswordNew, 8, function(error2, result2)
             {
                 if (error2)
                 {
                     Misc.FileLog(error2);
-                    return res.json({ Message: -4 });
+                    return res.json({ Message: -3 });
                 }
 
-                var IP = req.connection.remoteAddress;
+                DB.collection("account").updateOne({ _id: new MongoID(res.locals.ID) }, { $set: { Password: result2 } });
 
-                if (typeof Session === 'undefined' || Session === '')
-                    Session = "Unknown Session - " + IP;
-                else
-                    Session = Session + " - " + IP;
-
-                DB.collection("account").updateOne({ _id: new MongoID(result._id) }, { $push: { Session: { Name: Session, Token: result2, CreatedTime: Time } } });
-
-                res.json({ Message: 0, TOKEN: result2, ID: result._id, USERNAME: Username });
+                res.json({ Message: 0 });
             });
         });
-    });*/
+    });
+});
+
+AuthRouter.post('/SignInGoogle', Auth(), RateLimit(30, 60), function(req, res)
+{
+    var Token = req.body.Token;
+    var Session = req.body.Session;
+
+    if (typeof Token === 'undefined' || Token === '')
+        return res.json({ Message: 1 });
+
+    var GoogleAuth = new require('google-auth-library');
+    var Client = new GoogleAuth.OAuth2('590625045379-pnhlgdqpr5i8ma705ej7akcggsr08vdf.apps.googleusercontent.com', '', '');
+    Client.verifyIdToken(Token, '590625045379-pnhlgdqpr5i8ma705ej7akcggsr08vdf.apps.googleusercontent.com', function(error, result)
+    {
+        var PayLoad = result.getPayload();
+
+        if (typeof PayLoad === 'undefined' || PayLoad === null || PayLoad === '')
+            return res.json({ Message: 2 });
+
+        if (PayLoad['iss'] !== "accounts.google.com" && PayLoad['iss'] !== "https://accounts.google.com")
+            return res.json({ Message: 3 });
+
+        if (PayLoad['aud'] !== '590625045379-pnhlgdqpr5i8ma705ej7akcggsr08vdf.apps.googleusercontent.com')
+            return res.json({ Message: 4 });
+
+        var IP = req.connection.remoteAddress;
+
+        if (typeof Session === 'undefined' || Session === '')
+            Session = "Unknown Session - " + IP;
+        else
+            Session = Session + " - " + IP;
+
+        DB.collection("account").findOne({ GoogleID: PayLoad['sub'] }, { Username: 1, AvatarServer: 1, Avatar: 1 }, function(error1, result1)
+        {
+            if (error1)
+            {
+                Misc.FileLog(error1);
+                return res.json({ Message: -1 });
+            }
+
+            if (result1 !== null)
+            {
+
+            }
+            else
+            {
+
+            }
+        });
+         /*
+
+          if (empty($Account))
+          {
+          $App->RateLimit->Call('SignInGoogleCreated.1.60000');
+
+          $Username = explode("@", $PayLoad['email'])[0];
+          $Username = substr($Username, 0, 12);
+          $Username .= substr(time(), -4, 4);
+          $Username .= "b";
+
+          $ID = $App->DB->Insert('account', ['GoogleID' => $PayLoad['sub'], 'Username' => $Username, 'Email' => $PayLoad['email'], 'CreatedTime' => time()]);
+
+          $Token = $App->Auth->CreateToken(["ID" => $ID->__toString()]);
+
+          $App->DB->Update('account', ['_id' => $ID], ['$push' => ['Session' => ['Name' => $Session, 'Token' => $Token, 'CreatedTime' => time()]]]);
+
+          JSON(["Message" => 1000, "TOKEN" => $Token, "ID" => $ID->__toString(), "Username" => $Username, "Password" => false, "Avatar" => ""]);
+          }
+          else
+          {
+          $ID = $Account[0]->_id->__toString();
+
+          $Token = $App->Auth->CreateToken(["ID" => $ID]);
+
+          $App->DB->Update('account', ['_id' => $Account[0]->_id], ['$push' => ['Session' => ['Name' => $Session, 'Token' => $Token, 'CreatedTime' => time()]]]);
+
+          if (isset($Account[0]->AvatarServer))
+          $AvatarServerURL = Upload::GetServerURL($Account[0]->AvatarServer);
+          else
+          $AvatarServerURL = "";
+
+          $Password = false;
+
+          if (isset($Account[0]->Password))
+          $Password = true;
+
+          JSON(["Message" => 1000, "TOKEN" => $Token, "ID" => $ID, "Username" => $Account[0]->Username, "Password" => $Password, "Avatar" => (isset($Account[0]->Avatar) ? $AvatarServerURL . $Account[0]->Avatar : "")]);
+          }
+          */
+    });
+});
+
+AuthRouter.get('/RecoveryPassword/:Key', RateLimit(30, 60), function(req, res)
+{
+    // TODO Implement Me
 });
 
 module.exports = AuthRouter;
