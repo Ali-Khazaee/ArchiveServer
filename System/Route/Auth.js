@@ -251,6 +251,8 @@ AuthRouter.post('/ResetPassword', RateLimit(30, 60), function(req, res)
             if (result === null)
                 return res.json({ Message: 3 });
 
+            var RandomString = Misc.RandomString(25);
+
             DB.collection("recovery_password").insertOne({ ID: result._id, Data: EmailOrUsername, Key: RandomString, CreatedTime: Misc.Time });
 
             var URL = "http://recovery.biogram.co/RecoveryPassword/" + RandomString;

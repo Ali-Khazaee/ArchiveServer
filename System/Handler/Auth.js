@@ -77,5 +77,19 @@ function Auth()
     };
 }
 
+function AdminAuth()
+{
+    return function(req, res, next)
+    {
+        var Session = req.body.Session;
+
+        if (typeof Session === 'undefined' || Session === '' || Session !== AuthConfig.ADMIN_SESSION)
+            return res.json({ Message: -5 });
+
+        next();
+    };
+}
+
 module.exports = Auth;
+module.exports.AdminAuth = AdminAuth;
 module.exports.CreateToken = CreateToken;

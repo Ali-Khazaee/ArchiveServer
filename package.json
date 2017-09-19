@@ -13,6 +13,7 @@
         "locutus": "^2.0.9",
         "mongodb": "^2.2.31",
         "nodemailer": "^4.1.0",
+        "socket.io": "^2.0.3",
         "winston": "^2.3.1"
     }
 }
