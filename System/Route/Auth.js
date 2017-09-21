@@ -180,7 +180,7 @@ AuthRouter.post('/SignIn', RateLimit(30, 60), function(req, res)
 
             var Time = Misc.Time;
             var IP = req.connection.remoteAddress;
-            var Token = Auth.CreateToken(result2.insertedId);
+            var Token = Auth.CreateToken(result._id);
 
             if (typeof Session === 'undefined' || Session === '')
                 Session = "Unknown Session - " + IP;

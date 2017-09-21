@@ -22,6 +22,7 @@ function(error, database)
 
     global.DB = database;
     global.MongoID = MongoDB.ObjectID;
+    global.ClientList = [];
 
     Misc.Log('MongoDB Connected');
 
@@ -38,14 +39,25 @@ function(error, database)
     App.use('/', require('./System/Route/Post'));
     App.use('/', require('./System/Route/Profile'));
 
-    /*IO.on('connection', function(socket)
+    IO.on('connection', function(Socket)
     {
-        socket.on('ali', function()
+        Socket.on('Register', function(Data)
         {
-            console.log('user aaaaaaaaa');
+            ClientList[Data.ID] = { "Socket": Socket };
         });
-        console.log('a user connected'+ socket);
-    });*/
+
+        Socket.on('disconnect', function()
+        {
+            for (var ID in ClientList)
+            {
+                if (ClientList[ID].Socket.id === Socket.id)
+                {
+                    delete ClientList[ID];
+                    break;
+                }
+            }
+        });
+    });
 
     HTTP.listen(CoreConfig.PORT, "127.0.0.1", function()
     {

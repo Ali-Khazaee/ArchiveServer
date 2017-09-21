@@ -70,7 +70,7 @@ function Auth()
             if (result !== null || !Verify(Token))
                 return res.json({ Message: -4 });
 
-            res.locals.ID = JSON.parse(new Buffer(Token.split('.')[0], 'base64').toString('ascii')).ID;
+            res.locals.ID = new MongoID(JSON.parse(new Buffer(Token.split('.')[0], 'base64').toString('ascii')).ID);
 
             next();
         });
