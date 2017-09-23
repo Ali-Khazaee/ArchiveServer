@@ -5,11 +5,6 @@ Winston.add(Winston.transports.File, { filename: './System/Storage/Debug.log' })
 
 function Log(Message)
 {
-    console.log(Message)
-}
-
-function FileLog(Message)
-{
     Winston.warn(Message);
 }
 
@@ -17,7 +12,7 @@ var EmailPattern = /^[-!#$%&'*+\/0-9=?A-Z^_a-z{|}~](\.?[-!#$%&'*+\/0-9=?A-Z^_a-z
 
 function IsValidEmail(Email)
 {
-    if (!Email || Email.length > 254)
+    if (typeof Email === 'undefined' || Email === '' || Email.length > 254)
         return true;
 
     if (!EmailPattern.test(Email))
@@ -40,15 +35,13 @@ function SendEmail(Email, Subject, Body)
     {
         if (error)
             FileLog(error);
-        else
-            Log('Email Sent: ' + info.response);
     });
 }
 
 function RandomString(Count)
 {
     var Result = "";
-    var Possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    var Possible = "abcdefghijklmnopqrstuvwxyz";
 
     for (var I = 0; I < Count; I++)
         Result += Possible.charAt(Math.floor(Math.random() * Possible.length));
@@ -57,8 +50,8 @@ function RandomString(Count)
 }
 
 module.exports.Log = Log;
-module.exports.FileLog = FileLog;
-module.exports.IsValidEmail = IsValidEmail;
-module.exports.Time = Math.floor(Date.now() / 1000);
 module.exports.SendEmail = SendEmail;
+module.exports.IsValidEmail = IsValidEmail;
 module.exports.RandomString = RandomString;
+
+module.exports.Time = Math.floor(Date.now() / 1000);
