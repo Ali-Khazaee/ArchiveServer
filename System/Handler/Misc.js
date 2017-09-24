@@ -28,13 +28,13 @@ function IsValidEmail(Email)
 
 function SendEmail(Email, Subject, Body)
 {
-    var Transporter = NodeMailer.createTransport({ service: 'mail.biogram.co', auth: { user: 'no-reply@biogram.co', pass: 'K01kTl45' } });
-    var MailOptions = { from: 'no-reply@biogram.co', to: Email, subject: Subject, html: Body };
+    var Transporter = NodeMailer.createTransport({ host: 'mail.biogram.co', ignoreTLS: true, auth: { user: 'no-reply@biogram.co', pass: 'K01kTl45' } });
+    var MailOptions = { from: '[Biogram] <no-reply@biogram.co>', to: Email, subject: Subject, html: Body };
 
     Transporter.sendMail(MailOptions, function(error, info)
     {
         if (error)
-            FileLog(error);
+            Log(error);
     });
 }
 

@@ -3,9 +3,7 @@ var Request      = require('request');
 var Async        = require('async');
 var Misc         = require('../Handler/Misc');
 
-var ServerList = [];
-    ServerList[0] = { ID: 0, URL: UploadConfig.UPLOAD_SERVER_1 };
-    ServerList[1] = { ID: 1, URL: UploadConfig.UPLOAD_SERVER_2 };
+var ServerList = [ { ID: 0, URL: UploadConfig.UPLOAD_SERVER_1 }, { ID: 1, URL: UploadConfig.UPLOAD_SERVER_2 } ];
 
 function ServerToken(ID)
 {
@@ -13,13 +11,17 @@ function ServerToken(ID)
     {
         case 0: return UploadConfig.UPLOAD_SERVER_1_TOKEN;
         case 1: return UploadConfig.UPLOAD_SERVER_2_TOKEN;
+        default: Misc.Log('Upload: Wrong ID: ' + ID + ' Inside ServerToken Function'); break;
     }
 }
 
 function ServerURL(ID)
 {
     if (typeof ServerList[ID] === 'undefined' || ServerList[ID] === null)
+    {
+        Misc.Log('Upload: Wrong ID: ' + ID + ' Inside ServerURL Function');
         return '';
+    }
 
     return ServerList[ID].URL;
 }
@@ -40,8 +42,8 @@ function BestServerID()
             }
             catch (e)
             {
-                Misc.FileLog('Upload-BestServerID: ' + body);
-                Misc.FileLog('Upload-BestServerID: ' + e);
+                Misc.Log('Upload-BestServerID: ' + body);
+                Misc.Log('Upload-BestServerID: ' + e);
             }
 
             Result.push([ item.ID, Space ]);
@@ -66,8 +68,8 @@ function DeleteFile(ID, URL)
         }
         catch (e)
         {
-            Misc.FileLog('Upload-DeleteFile: ' + body);
-            Misc.FileLog('Upload-DeleteFile: ' + e);
+            Misc.Log('Upload-DeleteFile: ' + body);
+            Misc.Log('Upload-DeleteFile: ' + e);
         }
 
         return Result;

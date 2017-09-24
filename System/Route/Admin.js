@@ -9,47 +9,47 @@ AdminRouter.post('/Admin/Status', Auth.AdminAuth(), RateLimit(10, 60), function(
     {
         if (error)
         {
-            Misc.FileLog(error);
+            Misc.Log(error);
             return res.json({ Message: -1 });
         }
 
-        DB.collection("post").count(function(error, PostCount)
+        DB.collection("post").count(function(error1, PostCount)
         {
-            if (error)
+            if (error1)
             {
-                Misc.FileLog(error);
+                Misc.Log(error1);
                 return res.json({ Message: -1 });
             }
 
-            DB.collection("post_comment").count(function(error, PostCommentCount)
+            DB.collection("post_comment").count(function(error2, PostCommentCount)
             {
-                if (error)
+                if (error2)
                 {
-                    Misc.FileLog(error);
+                    Misc.Log(error2);
                     return res.json({ Message: -1 });
                 }
 
-                DB.collection("post_like").count(function(error, PostLikeCount)
+                DB.collection("post_like").count(function(error3, PostLikeCount)
                 {
-                    if (error)
+                    if (error3)
                     {
-                        Misc.FileLog(error);
+                        Misc.Log(error3);
                         return res.json({ Message: -1 });
                     }
 
-                    DB.collection("post_bookmark").count(function(error, PostBookmarkCount)
+                    DB.collection("post_bookmark").count(function(error4, PostBookmarkCount)
                     {
-                        if (error)
+                        if (error4)
                         {
-                            Misc.FileLog(error);
+                            Misc.Log(error4);
                             return res.json({ Message: -1 });
                         }
 
-                        DB.collection("report").count(function(error, ReportCount)
+                        DB.collection("report").count(function(error5, ReportCount)
                         {
-                            if (error)
+                            if (error5)
                             {
-                                Misc.FileLog(error);
+                                Misc.Log(error5);
                                 return res.json({ Message: -1 });
                             }
 

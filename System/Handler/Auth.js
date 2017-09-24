@@ -17,7 +17,7 @@ function Auth()
         {
             if (error)
             {
-                Misc.FileLog(error);
+                Misc.Log(error);
                 return res.json({ Message: -1 });
             }
 

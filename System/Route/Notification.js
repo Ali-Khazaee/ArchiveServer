@@ -18,7 +18,7 @@ NotificationRouter.post('/Notification', Auth(), RateLimit(60, 60), function(req
     {
         if (error)
         {
-            Misc.FileLog(error);
+            Misc.Log(error);
             return res.json({ Message: -1 });
         }
 
@@ -33,11 +33,11 @@ NotificationRouter.post('/NotificationList', Auth(), RateLimit(60, 60), function
     if (typeof Skip === 'undefined' || Skip === '' || Skip === null)
         Skip = 0;
 
-    DB.collection("notification").find({ OwnerID: res.locals.ID }).limit(10).sort({ Time: -1}).skip(Skip).toArray(function(error, result)
+    DB.collection("notification").find({ OwnerID: res.locals.ID }).limit(10).sort({ Time: -1 }).skip(Skip).toArray(function(error, result)
     {
         if (error)
         {
-            Misc.FileLog(error);
+            Misc.Log(error);
             return res.json({ Message: -1 });
         }
 
@@ -49,11 +49,11 @@ NotificationRouter.post('/NotificationList', Auth(), RateLimit(60, 60), function
             {
                 if (error1)
                 {
-                    Misc.FileLog(error1);
+                    Misc.Log(error1);
                     return res.json({ Message: -1 });
                 }
 
-                if (result === null)
+                if (result1 === null)
                     return callback();
 
                 var Avatar = '';

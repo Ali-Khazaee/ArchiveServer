@@ -16,7 +16,7 @@ function(error, database)
 {
     if (error)
     {
-        Misc.FileLog(error);
+        Misc.Log(error);
         process.exit(1);
     }
 
