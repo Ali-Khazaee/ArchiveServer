@@ -340,7 +340,7 @@ AuthRouter.post('/ChangePassword', Auth(), RateLimit(30, 60), function(req, res)
     });
 });
 
-AuthRouter.post('/SignInGoogle', Auth(), RateLimit(30, 60), function(req, res)
+AuthRouter.post('/SignInGoogle', RateLimit(30, 60), function(req, res)
 {
     var Token = req.body.Token;
     var Session = req.body.Session;
@@ -348,8 +348,9 @@ AuthRouter.post('/SignInGoogle', Auth(), RateLimit(30, 60), function(req, res)
     if (typeof Token === 'undefined' || Token === '')
         return res.json({ Message: 1 });
 
-    var GoogleAuth = new require('google-auth-library');
-    var Client = new GoogleAuth.OAuth2('590625045379-pnhlgdqpr5i8ma705ej7akcggsr08vdf.apps.googleusercontent.com', '', '');
+    var GoogleAuth = require('google-auth-library');
+    var AuthGoogle = new GoogleAuth;
+    var Client = new AuthGoogle.OAuth2('590625045379-pnhlgdqpr5i8ma705ej7akcggsr08vdf.apps.googleusercontent.com', '', '');
 
     Client.verifyIdToken(Token, '590625045379-pnhlgdqpr5i8ma705ej7akcggsr08vdf.apps.googleusercontent.com', function(error, result)
     {
@@ -395,7 +396,7 @@ AuthRouter.post('/SignInGoogle', Auth(), RateLimit(30, 60), function(req, res)
 
                 DB.collection("account").updateOne({ _id: result1._id }, { $push: { Session: { Name: Session, Token: Token, CreatedTime: Misc.Time } } });
 
-                res.json({ Message: 0, TOKEN: Token, ID: result1._id, USERNAME: result1.Username, Avatar: Avatar });
+                res.json({ Message: 0, TOKEN: Token, ID: result1._id, Username: result1.Username, Avatar: Avatar });
             }
             else
             {
@@ -415,7 +416,7 @@ AuthRouter.post('/SignInGoogle', Auth(), RateLimit(30, 60), function(req, res)
 
                     DB.collection("account").updateOne({ _id: result2.insertedId }, { $push: { Session: { Name: Session, Token: Token, CreatedTime: Time } } });
 
-                    res.json({ Message: 0, TOKEN: Token, ID: result2.insertedId, USERNAME: Username });
+                    res.json({ Message: 0, TOKEN: Token, ID: result2.insertedId, USERNAME: Username, Avatar: '' });
                 });
             }
         });

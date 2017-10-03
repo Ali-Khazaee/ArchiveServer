@@ -62,4 +62,70 @@ AdminRouter.post('/Admin/Status', Auth.AdminAuth(), RateLimit(10, 60), function(
     });
 });
 
+AdminRouter.post('/Admin/FindUserByID', Auth.AdminAuth(), RateLimit(10, 60), function(req, res)
+{
+    var ID = req.body.Username;
+
+    if (typeof ID === 'undefined' || ID === '')
+        return res.json({ Message: 1 });
+
+    DB.collection("account").findOne({ _id: new MongoID(ID) }, function(error, result)
+    {
+        if (error)
+        {
+            Misc.Log(error);
+            return res.json({ Message: -1 });
+        }
+
+        if (result === null)
+            return res.json({ Message: 2 });
+
+        res.json({ Message: 0, Result: result});
+    });
+});
+
+AdminRouter.post('/Admin/FindUserByUsername', Auth.AdminAuth(), RateLimit(10, 60), function(req, res)
+{
+    var Username = req.body.Username;
+
+    if (typeof Username === 'undefined' || Username === '')
+        return res.json({ Message: 1 });
+
+    DB.collection("account").findOne({ Username: Username }, function(error, result)
+    {
+        if (error)
+        {
+            Misc.Log(error);
+            return res.json({ Message: -1 });
+        }
+
+        if (result === null)
+            return res.json({ Message: 2 });
+
+        res.json({ Message: 0, Result: result});
+    });
+});
+
+AdminRouter.post('/Admin/FindPostByID', Auth.AdminAuth(), RateLimit(10, 60), function(req, res)
+{
+    var ID = req.body.ID;
+
+    if (typeof ID === 'undefined' || ID === '')
+        return res.json({ Message: 1 });
+
+    DB.collection("post").findOne({ _id: new MongoID(ID) }, function(error, result)
+    {
+        if (error)
+        {
+            Misc.Log(error);
+            return res.json({ Message: -1 });
+        }
+
+        if (result === null)
+            return res.json({ Message: 2 });
+
+        res.json({ Message: 0, Result: result});
+    });
+});
+
 module.exports = AdminRouter;

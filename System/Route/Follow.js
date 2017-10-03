@@ -40,18 +40,38 @@ FollowRouter.post('/Follow', Auth(), RateLimit(120, 60), function(req, res)
                 return res.json({ Message: -1 });
             }
 
+            var Type = 3;
+
             if (result1 === null)
             {
-                Notification.SendNotification(FollowerID, OwnerID, 7, '');
+                Type = 7;
                 DB.collection("follow").removeOne({ $and: [{ OwnerID: OwnerID, Follower: FollowerID }] });
                 res.json({ Message: 0, Follow: false });
             }
             else
             {
-                Notification.SendNotification(FollowerID, OwnerID, 3, '');
                 DB.collection("follow").insertOne({ OwnerID: OwnerID, Follower: FollowerID, Time: Misc.Time });
                 res.json({ Message: 0, Follow: true });
             }
+
+            DB.collection("account").findOne({ _id: OwnerID }, { _id: 0, AvatarServer: 1, Avatar: 1 }, function(error2, result2)
+            {
+                if (error2)
+                {
+                    Misc.Log(error2);
+                    return;
+                }
+
+                if (result2 === null)
+                    return;
+
+                var Avatar = '';
+
+                if (typeof result2.AvatarServer !== 'undefined' && result2.AvatarServer !== null && typeof result2.Avatar !== 'undefined' && result2.Avatar !== null)
+                    Avatar = Upload.ServerURL(result2.AvatarServer) + result2.Avatar;
+
+                Notification.SendNotification(FollowerID, OwnerID, Type, Avatar, '');
+            });
         });
     });
 });

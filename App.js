@@ -5,6 +5,7 @@ var CoreConfig     = require("./System/Config/Core");
 var MongoDB        = require('mongodb');
 var DataBaseConfig = require('./System/Config/DataBase');
 var Misc           = require('./System/Handler/Misc');
+var Notification   = require('./System/Handler/Notification');
 var IO             = require('socket.io')(HTTP);
 
 MongoDB.MongoClient.connect('mongodb://' + DataBaseConfig.USERNAME + ':' + DataBaseConfig.PASSWORD + '@' + DataBaseConfig.HOST + ':' + DataBaseConfig.PORT + '/' + DataBaseConfig.DATABASE,
@@ -38,12 +39,15 @@ function(error, database)
     App.use('/', require('./System/Route/Notification'));
     App.use('/', require('./System/Route/Post'));
     App.use('/', require('./System/Route/Profile'));
+    App.use('/', require('./System/Route/Search'));
 
     IO.on('connection', function(Socket)
     {
         Socket.on('Register', function(Data)
         {
             ClientList[Data.ID] = { "Socket": Socket };
+
+            Notification.SendAllNotification(Data.ID);
         });
 
         Socket.on('disconnect', function()
