@@ -13,7 +13,7 @@ function Auth()
         if (typeof Token === 'undefined' || Token === '' || Token.split('.').length !== 2)
             return res.json({ Message: -4 });
 
-        DB.collection("token").findOne({ TOKEN: Token }, { _id: 1 }, function(error, result)
+        DB.collection("token").findOne({ Token: Token }, { _id: 1 }, function(error, result)
         {
             if (error)
             {
@@ -80,7 +80,7 @@ function AdminAuth()
 
 function CreateToken(ID)
 {
-    var Segment = StringReplace('=', '', StringTrim(Buffer.from(JSON.stringify({ ID: ID, exp : Misc.Time + 15768000 }).toString()).toString('base64'), '+/', '-_'));
+    var Segment = StringReplace('=', '', StringTrim(Buffer.from(JSON.stringify({ ID: ID, Time : Misc.Time }).toString()).toString('base64'), '+/', '-_'));
 
     var Signer = Crypto.createSign('sha256');
     Signer.update(Segment);

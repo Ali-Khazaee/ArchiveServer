@@ -63,7 +63,7 @@ function(error, database)
         });
     });
 
-    HTTP.listen(CoreConfig.PORT, "127.0.0.1", function()
+    HTTP.listen(CoreConfig.PORT, "0.0.0.0", function()
     {
         Misc.Log("Running Server Port: " + CoreConfig.PORT);
     });
@@ -75,4 +75,6 @@ function(error, database)
     -3 = BCrypt Hash Failed
     -4 = Auth Failed
     -5 = Admin Failed
+    -6 = Request Failed
+    -7 = Formidable Failed
  */

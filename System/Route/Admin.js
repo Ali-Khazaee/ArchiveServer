@@ -108,7 +108,7 @@ AdminRouter.post('/Admin/FindUserByUsername', Auth.AdminAuth(), RateLimit(10, 60
 
 AdminRouter.post('/Admin/FindPostByID', Auth.AdminAuth(), RateLimit(10, 60), function(req, res)
 {
-    var ID = req.body.ID;
+    var ID = req.body.Username;
 
     if (typeof ID === 'undefined' || ID === '')
         return res.json({ Message: 1 });

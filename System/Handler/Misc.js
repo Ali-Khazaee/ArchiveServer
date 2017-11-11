@@ -49,9 +49,21 @@ function RandomString(Count)
     return Result;
 }
 
+function RandomNumber(Count)
+{
+    var Result = "";
+    var Possible = "0123456789";
+
+    for (var I = 0; I < Count; I++)
+        Result += Possible.charAt(Math.floor(Math.random() * Possible.length));
+
+    return Result;
+}
+
 module.exports.Log = Log;
 module.exports.SendEmail = SendEmail;
 module.exports.IsValidEmail = IsValidEmail;
 module.exports.RandomString = RandomString;
+module.exports.RandomNumber = RandomNumber;
 
 module.exports.Time = Math.floor(Date.now() / 1000);

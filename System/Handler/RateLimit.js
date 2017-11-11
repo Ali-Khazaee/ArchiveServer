@@ -25,7 +25,7 @@ function RateLimit(Count, ExpireTime)
 
             if (result.value.Time < Time)
             {
-                DB.collection("ratelimit").updateOne({ _id: new MongoID(result.value._id) }, { $set: { Time: Time + ExpireTime, Count: 1 } });
+                DB.collection("ratelimit").updateOne({ _id: new MongoID(result.value._id) }, { $set: { Time: Time + ExpireTime, Count: 0 } });
                 next();
                 return;
             }

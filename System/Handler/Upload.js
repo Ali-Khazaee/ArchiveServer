@@ -11,15 +11,17 @@ function ServerToken(ID)
     {
         case 0: return UploadConfig.UPLOAD_SERVER_1_TOKEN;
         case 1: return UploadConfig.UPLOAD_SERVER_2_TOKEN;
-        default: Misc.Log('Upload: Wrong ID: ' + ID + ' Inside ServerToken Function'); break;
     }
+
+    Misc.Log('Upload-ServerToken: Wrong ID ( ' + ID + ' )');
+    return '';
 }
 
 function ServerURL(ID)
 {
     if (typeof ServerList[ID] === 'undefined' || ServerList[ID] === null)
     {
-        Misc.Log('Upload: Wrong ID: ' + ID + ' Inside ServerURL Function');
+        Misc.Log('Upload-ServerURL: Wrong ID ( ' + ID + ' )');
         return '';
     }
 
@@ -30,10 +32,17 @@ function BestServerID()
 {
     var Result = [];
 
-    Async.eachSeries(ServerList, function(item, callback)
+    return new Promise(function(resolve, reject)
     {
-        Request.post({ url: item.URL + "StorageSpace", form: { Password: ServerToken(item.ID) } }, function(error, httpResponse, body)
+
+        Request.post({ url: ServerList[0].URL + "/StorageSpace", form: { Password: ServerToken(0) } }, function(error, httpResponse, body)
         {
+            if (error)
+            {
+                Misc.Log('Upload-BestServerID: ' + error + " -- " + httpResponse + " -- " + body);
+                reject();
+            }
+
             var Space = 0;
 
             try
@@ -42,15 +51,39 @@ function BestServerID()
             }
             catch (e)
             {
-                Misc.Log('Upload-BestServerID: ' + body);
-                Misc.Log('Upload-BestServerID: ' + e);
+                Misc.Log('Upload-BestServerID: ' + e + " -- " + error + " -- " + httpResponse + " -- " + body);
             }
 
-            Result.push([ item.ID, Space ]);
-            callback();
+            Result.push([ 0, Space ]);
+            resolve();
         });
-    },
-    function()
+    })
+    .then(function()
+    {
+        Request.post({ url: ServerList[1].URL + "/StorageSpace", form: { Password: ServerToken(1) } }, function(error, httpResponse, body)
+        {
+            if (error)
+            {
+                Misc.Log('Upload-BestServerID: ' + error + " -- " + httpResponse + " -- " + body);
+                return;
+            }
+
+            var Space = 0;
+
+            try
+            {
+                Space = JSON.parse(body).Space;
+            }
+            catch (e)
+            {
+                Misc.Log('Upload-BestServerID: ' + e + " -- " + error + " -- " + httpResponse + " -- " + body);
+            }
+
+            Result.push([ 1, Space ]);
+            return;
+        });
+    })
+    .then(function()
     {
         return Result.reduce(function(max, array) { return Math.max(max, array[0]); }, -Infinity);
     });
@@ -76,6 +109,7 @@ function DeleteFile(ID, URL)
     });
 }
 
+module.exports.ServerToken = ServerToken;
 module.exports.BestServerID = BestServerID;
 module.exports.DeleteFile = DeleteFile;
 module.exports.ServerURL = ServerURL;
