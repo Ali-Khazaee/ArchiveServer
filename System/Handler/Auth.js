@@ -1,16 +1,17 @@
-let Crypto        = require('crypto');
-let Misc          = require('./Misc');
-let AuthConfig    = require('../Config/Auth');
-let StringTrim    = require('locutus/php/strings/strtr');
-let StringReplace = require('locutus/php/strings/str_replace');
+const Crypto        = require('crypto');
+const Misc          = require('./Misc');
+const AuthConfig    = require('../Config/Auth');
+const StringTrim    = require('locutus/php/strings/strtr');
+const StringReplace = require('locutus/php/strings/str_replace');
 
 function Auth()
 {
     return function(req, res, next)
     {
-        let Token = req.headers.token;
+        const Token = req.headers.token;
+        const Split = Token.split('.');
 
-        if (typeof Token === 'undefined' || Token === '' || Token.split('.').length !== 2)
+        if (typeof Token === 'undefined' || Token === '' || Split.length !== 2)
             return res.json({ Message: -4 });
 
         DB.collection("token").findOne({ Token: Token }, { _id: 1 }, function(error, result)
@@ -24,8 +25,9 @@ function Auth()
             if (result !== null)
                 return res.json({ Message: -4 });
 
-            let Signature = Token.split('.')[1];
-            let Remainder = Signature.length % 4;
+            const Data = Split[0];
+            let Signature = Split[1];
+            const Remainder = Signature.length % 4;
 
             if (Remainder)
             {
@@ -36,7 +38,7 @@ function Auth()
 
                 while (true)
                 {
-                    if (PadLength && 1)
+                    if (PadLength)
                         Y += Input;
 
                     PadLength >>= 1;
@@ -53,12 +55,12 @@ function Auth()
             Signature = Buffer.from(StringTrim(Signature, '-_', '+/'), 'base64');
 
             let Verifier = Crypto.createVerify('sha256');
-            Verifier.update(Token.split('.')[0]);
+            Verifier.update(Data);
 
             if (!Verifier.verify(AuthConfig.PUBLIC_KEY, Signature, 'base64'))
                 return res.json({ Message: -4 });
 
-            res.locals.ID = new MongoID(JSON.parse(new Buffer(Token.split('.')[0], 'base64').toString('ascii')).ID);
+            res.locals.ID = MongoID(JSON.parse(new Buffer(Split, 'base64').toString('ascii')).ID);
 
             next();
         });

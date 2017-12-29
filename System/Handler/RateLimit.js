@@ -1,12 +1,11 @@
-var Misc = require('./Misc');
+const Misc = require('./Misc');
 
 function RateLimit(Count, ExpireTime)
 {
     return function(req, res, next)
     {
-        var IP = req.connection.remoteAddress;
-        var URL = req.originalUrl.substr(1);
-        var Time = Misc.Time;
+        const IP = req.connection.remoteAddress;
+        const URL = req.originalUrl.substr(1);
 
         DB.collection("ratelimit").findOneAndUpdate({ IP: IP, URL: URL }, { $inc: { Count: 1 } }, { projection: { _id: 0, Count: 1, Time: 1 } }, function(error, result)
         {
@@ -15,6 +14,8 @@ function RateLimit(Count, ExpireTime)
                 Misc.Log(error);
                 return res.json({ Message: -1 });
             }
+
+            const Time = Misc.Time;
 
             if (result.value === null)
             {
@@ -25,7 +26,7 @@ function RateLimit(Count, ExpireTime)
 
             if (result.value.Time < Time)
             {
-                DB.collection("ratelimit").updateOne({ _id: new MongoID(result.value._id) }, { $set: { Time: Time + ExpireTime, Count: 0 } });
+                DB.collection("ratelimit").updateOne({ _id: result.value._id }, { $set: { Time: Time + ExpireTime, Count: 1 } });
                 next();
                 return;
             }

@@ -6,17 +6,17 @@
     "author": "Ali.Khazaee",
     "license": "Khazaee",
     "dependencies": {
-        "async": "^2.5.0",
+        "async": "^2.6.0",
         "bcrypt": "^1.0.3",
-        "body-parser": "^1.17.2",
+        "body-parser": "^1.18.2",
         "express": "^4.15.5",
         "formidable": "^1.1.1",
-        "google-auth-library": "^0.11.0",
+        "google-auth-library": "^0.12.0",
         "locutus": "^2.0.9",
-        "mongodb": "^2.2.31",
-        "nodemailer": "^4.1.0",
-        "request": "^2.82.0",
-        "socket.io": "^2.0.3",
-        "winston": "^2.3.1"
+        "mongodb": "^3.0.1",
+        "nodemailer": "^4.4.1",
+        "request": "^2.83.0",
+        "socket.io": "^2.0.4",
+        "winston": "^2.4.0"
     }
 }
