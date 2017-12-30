@@ -21,7 +21,7 @@ function(error, database)
 
     console.log('MongoDB Connected');
 
-    global.DB = database;
+    global.DB = database.db("BioGram2");
     global.MongoID = MongoDB.ObjectID;
 
     App.disable("x-powered-by");
