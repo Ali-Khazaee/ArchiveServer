@@ -1,17 +1,10 @@
 const PostRouter = require('express').Router();
 const Formidable = require('formidable');
-const Request    = require('request');
-const FS         = require('fs');
-const FFMPEG     = require('fluent-ffmpeg');
-const UniqueName = require('uuid/v4');
 const RateLimit  = require('../Handler/RateLimit');
 const Upload     = require('../Handler/Upload');
 const Auth       = require('../Handler/Auth');
+const Post       = require('../Model/Post');
 const Misc       = require('../Handler/Misc');
-
-// For Windows
-FFMPEG.setFfmpegPath('./System/FFmpeg/ffmpeg.exe');
-FFMPEG.setFfprobePath('./System/FFmpeg/ffprobe.exe');
 
 PostRouter.post('/PostWrite', Auth(), RateLimit(60, 3600), function(req, res)
 {
@@ -22,30 +15,33 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 3600), function(req, res)
     {
         if (error)
         {
-            Misc.Log("[Formidable]: " + error);
+            Misc.Log("[PostWrite-Formidable]: " + error);
             return res.json({ Result: -7 });
         }
 
         let Message = fields.Message;
         let Category = fields.Category;
-        let Type = fields.Type;
+        let Type = parseInt(fields.Type);
         let Vote = fields.Vote;
         let World = fields.World;
 
-        if (typeof Type === 'undefined' || Type === '')
+        if (Type === undefined || Type === '')
             return res.json({ Result: 1 });
 
-        if (Type === 0 && typeof Message !== 'undefined' && Message.length < 20)
+        if (Type === 0 && Message !== undefined && Message.length < 20)
             return res.json({ Result: 2 });
 
-        if (typeof Message === 'undefined')
+        if (Message === undefined)
             Message = "";
 
-        if (typeof Category === 'undefined' || Category === '' || Category > 21 || Category < 1)
+        if (Category === undefined || Category === '' || Category > 21 || Category < 1)
             Category = 100;
 
-        if (typeof Message !== 'undefined' && Message.length > 300)
+        if (Message !== undefined && Message.length > 300)
             Message = Message.substr(0, 300);
+
+        if (World === undefined || World === '')
+            World = 0;
 
         let NewLine = 0;
         let ResultMessage = "";
@@ -66,228 +62,220 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 3600), function(req, res)
         let ServerURL = Upload.ServerURL(ServerID);
         let ServerPass = Upload.ServerToken(ServerID);
 
-        switch (parseInt(Type))
+        switch (Type)
         {
             case 1:
             {
-                if (typeof files.Image1 !== 'undefined' && files.Image1 !== null && files.Image1.size < 3145728)
-                    Data.push(await UploadImage(ServerURL, ServerPass, files.Image1));
+                if (files.Image1 !== undefined && files.Image1 !== null && files.Image1.size < 3145728)
+                    Data.push(await Post.UploadImage(ServerURL, ServerPass, files.Image1));
 
-                if (typeof files.Image2 !== 'undefined' && files.Image2 !== null && files.Image1.size < 3145728)
-                    Data.push(await UploadImage(ServerURL, ServerPass, files.Image2));
+                if (files.Image2 !== undefined && files.Image2 !== null && files.Image1.size < 3145728)
+                    Data.push(await Post.UploadImage(ServerURL, ServerPass, files.Image2));
 
-                if (typeof files.Image3 !== 'undefined' && files.Image3 !== null && files.Image1.size < 3145728)
-                    Data.push(await UploadImage(ServerURL, ServerPass, files.Image3));
+                if (files.Image3 !== undefined && files.Image3 !== null && files.Image1.size < 3145728)
+                    Data.push(await Post.UploadImage(ServerURL, ServerPass, files.Image3));
             }
             break;
             case 2:
-                if (typeof files.Video !== 'undefined' && files.Video !== null)
-                    Data.push(await UploadVideo(ServerURL, ServerPass, files.Video));
+                if (files.Video !== undefined && files.Video !== null)
+                    Data.push(await Post.UploadVideo(ServerURL, ServerPass, files.Video));
             break;
             case 3:
+                try
+                {
+                    let VoteObj = JSON.parse(Vote);
+
+                    if (VoteObj.Vote1 === undefined || VoteObj.Vote1.length <= 0 || VoteObj.Vote2 === undefined || VoteObj.Vote2.length <= 0)
+                        return res.json({ Result: 3 });
+
+                    let VoteObj2 = { Vote1: VoteObj.Vote1, Val1: 0, Vote2: VoteObj.Vote2, Val2: 0 };
+
+                    if (VoteObj.Vote3 !== undefined && VoteObj.Vote3.length > 0)
+                    {
+                        VoteObj2.Vote3 = VoteObj.Vote3;
+                        VoteObj2.Val3 = 0;
+                    }
+
+                    if (VoteObj.Vote4 !== undefined && VoteObj.Vote4.length > 0)
+                    {
+                        VoteObj2.Vote4 = VoteObj.Vote4;
+                        VoteObj2.Val4 = 0;
+                    }
+
+                    if (VoteObj.Vote5 !== undefined && VoteObj.Vote5.length > 0)
+                    {
+                        VoteObj2.Vote5 = VoteObj.Vote5;
+                        VoteObj2.Val5 = 0;
+                    }
+
+                    Data.push(VoteObj2);
+                }
+                catch (e)
+                {
+                    Misc.Log("[PostWrite-Type-3]: " + e);
+                    return res.json({ Result: 3 });
+                }
             break;
             case 4:
-                if (typeof files.File !== 'undefined' && files.File !== null)
-                    Data.push(await UploadFile(ServerURL, ServerPass, files.File));
+                if (files.File !== undefined && files.File !== null)
+                    Data.push(await Post.UploadFile(ServerURL, ServerPass, files.File));
             break;
         }
 
-        res.json({ Result: 0, Data: Data });
+        let Result = { Owner: res.locals.ID, World: World, Category: Category, Type: Type, Time: Misc.Time };
+
+        if (Type === 1 || Type === 2 || Type === 4)
+            Result.Server = ServerID;
+
+        if (ResultMessage !== undefined && ResultMessage.length > 0)
+            Result.Message = ResultMessage;
+
+        if (Type === 1)
+            Result.Data = Data;
+        else if (Type === 2)
+            Result.Data = Data[0];
+        else if (Type === 4)
+            Result.Data = Data[0];
+
+        await DB.collection("post").insertOne(Result);
+
+        if (Type === 1 || Type === 2 || Type === 4)
+            Result.URL = ServerURL;
+
+        if (ResultMessage !== undefined && ResultMessage.length > 0)
+        {
+            /* TODO Add HashTag To DataBase
+                preg_match_all('/@(\w+)/', $Message, $UsernameList);
+                $UsernameList = explode(',', implode(',', $UsernameList[1]));
+
+                if (count($UsernameList) > 0)
+                {
+                    for ($X = 0; $X < count($UsernameList); $X++)
+                    {
+                        $Account = $App->DB->Find('account', ['Username' => $UsernameList[$X]], ["projection" => ["_id" => 1]])->toArray();
+
+                        if (empty($Account))
+                            continue;
+
+                        if ($Account[0]->_id != $OwnerID)
+                            $App->DB->Insert('notification', ["OwnerID" => $Account[0]->_id, "SenderID" => $OwnerID, "PostID" => $PostID, "Seen" => 0, "Type" => 1, "Time" => time()]);
+                    }
+                }
+
+                preg_match_all('/#(\w+)/u', $Message, $HashTagList);
+                $HashTagList = explode(',', implode(',', $HashTagList[1]));
+
+                if (count($HashTagList) > 0)
+                {
+                    for ($X = 0; $X < count($HashTagList); $X++)
+                    {
+                        if (!isset($App->DB->Find('tag', ['Tag' => $HashTagList[$X]])->toArray()[0]))
+                            $App->DB->Insert('tag', ['Tag' => strtolower($HashTagList[$X])]);
+                    }
+                }
+             */
+        }
+
+        res.json({ Message: 0, Post: Result });
     });
 });
 
-function UploadImage(URL, Pass, File)
+PostRouter.post('/PostListInbox', Auth(), RateLimit(10, 60), async function(req, res)
 {
-    return new Promise(function(resolve)
-    {
-        Request.post({ url: URL + "/UploadImage", formData: { Password: Pass, FileImage: FS.createReadStream(File.path) } }, function(error, httpResponse, body)
-        {
-            try
-            {
-                FS.unlink(File.path, function() { });
-                resolve(JSON.parse(body).Path);
-            }
-            catch (e)
-            {
-                Misc.Log("[UploadImage]: " + e);
-                resolve();
-            }
-        });
-    });
-}
+    const ID = res.locals.ID;
 
-function UploadVideo(URL, Pass, File)
-{
-    return new Promise(function(resolve)
+    DB.collection("follow").find({ Following: ID }, { _id: 0, Follower: 1 }).toArray(function(error, result)
     {
-        if (File.name.split('.').pop().toLowerCase() === ".mp4")
+        if (error)
         {
-            FFMPEG.ffprobe(File.path, function(error, data)
-            {
-                let Size = data.format.size * 1000;
-                let Duration = data.format.duration * 1000;
-
-                Request.post({ url: URL + "/UploadVideo", formData: { Password: Pass, FileVideo: FS.createReadStream(File.path) } }, function(error, httpResponse, body)
-                {
-                    try
-                    {
-                        FS.unlink(File.path, function() { });
-                        resolve({ Size: Size, Duration: Duration, URL: JSON.parse(body).Path });
-                    }
-                    catch (e)
-                    {
-                        Misc.Log("[UploadVideo]: " + e);
-                        resolve();
-                    }
-                });
-            });
+            Misc.Log("[PostListInbox-DB-1]: " + error);
+            return res.json({ Message: -1 });
         }
-        else
-        {
-            let Video = './System/Storage/Temp/' + UniqueName() + ".mp4";
 
-            FFMPEG(File.path).output(Video).renice(-10).on('end', function()
-            {
-                FS.unlink(File.path, function() { });
+        let PeopleList = [ID];
 
-                FFMPEG.ffprobe(Video, function(error, data)
-                {
-                    let Size = data.format.size * 1000;
-                    let Duration = data.format.duration * 1000;
+        for (const item of result) { PeopleList.push(item.Follower); }
 
-                    Request.post({ url: URL + "/UploadVideo", formData: { Password: Pass, FileVideo: FS.createReadStream(Video) } }, function(error, httpResponse, body)
-                    {
-                        try
-                        {
-                            FS.unlink(Video, function() { });
-                            resolve({ Size: Size, Duration: Duration, URL: JSON.parse(body).Path });
-                        }
-                        catch (e)
-                        {
-                            Misc.Log("[UploadVideo]: " + e);
-                            resolve();
-                        }
-                    });
-                });
-            }).run();
-        }
-    });
-}
-
-function UploadFile(URL, Pass, File)
-{
-    return new Promise(function(resolve)
-    {
-        Request.post({ url: URL + "/UploadFile", formData: { Password: Pass, File: FS.createReadStream(File.path) } }, function(error, httpResponse, body)
-        {
-            try
-            {
-                FS.unlink(File.path, function() { });
-                resolve({ Size: File.size, URL: JSON.parse(body).Path });
-            }
-            catch (e)
-            {
-                Misc.Log("[UploadFile]: " + e);
-                resolve();
-            }
-        });
-    });
-}
-
-/*PostRouter.post('/PostListInbox', Auth(), RateLimit(10, 60), async function(req, res)
-{
-    res.json({ Message: 0, Result: await Post.GetPrivate("599e4362be387c01ce2b3576") })
-
-    /*const ID = new MongoID(res.locals.ID);
-
-    new Promise((resolve) =>
-    {
-        DB.collection("follow2").find({ Following: ID }, { _id: 0, Follower: 1 }).toArray(function(error, result)
-        {
-            if (error)
-            {
-                Misc.Log("[DB]: " + error);
-                return res.json({ Message: -1 });
-            }
-
-            let PeopleList = [ID];
-
-            for (const item of result) { PeopleList.push(item.Follower); }
-
-            resolve(PeopleList);
-        });
-    })
-    .then((PeopleList) =>
-    {
         let Count = 0;
         let PostList = [];
         let Size = PeopleList.length;
 
         for (const item of PeopleList)
         {
-            DB.collection("post2").find({ Owner: item }, { _id: 1, Time: 1 }).toArray(function(error, result)
+            DB.collection("post").find({ Owner: item, World: '0' }, { _id: 1, Time: 1 }).sort({ Time : -1 }).limit(8).toArray(function(error, result)
             {
                 if (error)
                 {
-                    Misc.Log("[DB]: " + error);
+                    Misc.Log("[PostListInbox-DB-2]: " + error);
                     return res.json({ Message: -1 });
                 }
 
-                for (const item2 of result) { PostList.push( { ID: item2._id, Time: item2.Time } ); }
+                for (const item2 of result) { PostList.push({ ID: item2._id, Time: item2.Time }); }
 
                 if (++Count >= Size)
-                    resolve(PostList);
+                {
+                    // Sort By Value
+                    PostList.sort(function(A, B)
+                    {
+                        if (A["Time"] > B["Time"])
+                            return -1;
+
+                        if (A["Time"] < B["Time"])
+                            return 1;
+
+                        return 0;
+                    });
+
+                    let Skip = req.body.Skip;
+
+                    if (Skip === undefined || Skip === '' || Skip === null)
+                        Skip = 0;
+
+                    PostList = PostList.slice(Skip, Skip + 8);
+
+                    Count = 0;
+                    let Result = [];
+                    let Size = PostList.length;
+
+                    for (const item of PostList)
+                    {
+                        DB.collection("post").findOne({ _id: item.ID }, async function(error, result)
+                        {
+                            if (error)
+                            {
+                                Misc.Log("[PostListInbox-DB-3]: " + error);
+                                return res.json({ Message: -1 });
+                            }
+
+                            let Server;
+                            let Avatar = '';
+                            let Account = await DB.collection("account").find({ _id: result.Owner }).project({ _id: 0, Name: 1, Username: 1, Avatar: 1, AvatarServer: 1 }).limit(1).toArray();
+                            let IsLike = await DB.collection("post_like").find({ $and: [ { Owner: ID }, { PostID: result._id } ] }).count();
+                            let IsFollow = await DB.collection("follow").find({ $and: [ { Following: ID }, { Follower: result.Owner } ] }).count();
+                            let IsBookmark = await DB.collection("post_bookmark").find({ $and: [ { Owner: ID }, { PostID: result._id } ] }).count();
+                            let LikeCount = await DB.collection("post_like").find({ PostID: result._id }).count();
+                            let CommentCount = await DB.collection("post_comment").find({ PostID: result._id }).count();
+
+                            if (Account.Avatar !== undefined && Account.Avatar !== null && Account.AvatarServer !== undefined && Account.AvatarServer !== null)
+                                Avatar = Upload.ServerURL(Account.AvatarServer) + Account.Avatar;
+
+                            if (result.Server !== undefined && Account.Server !== null)
+                                Server = Upload.ServerURL(result.Server);
+
+                            Result.push({ ID: result._id, Message: result.Message, Server: Server, Type: result.Type,
+                                          Data: result.Data, View: result.View, Category: result.Category,
+                                          Owner: result.Owner, Time: result.Time, Avatar: Avatar,
+                                          LikeCount: LikeCount, CommentCount: CommentCount, Like: IsLike,
+                                          Follow: IsFollow, Comment: result.Comment, Bookmark: IsBookmark });
+
+                            if (++Count >= Size)
+                                res.json({ Message: 0, Result: Result });
+                        });
+                    }
+                }
             });
         }
-    })
-    .then((PostList) =>
-    {
-        // Sort By Value
-        PostList.sort(function(a, b)
-        {
-            if (a["Time"] > b["Time"])
-                return -1;
-            else if (a["Time"] < b["Time"])
-                return 1;
-
-            return 0;
-        });
-
-        let Count = 0;
-        let Count2 = 0;
-        let Result = [];
-        let Skip = req.body.Skip;
-
-        if (typeof Skip === 'undefined' || Skip === '')
-            Skip = 0;
-
-        for (let I = Skip; I < PostList.length; I++)
-        {
-            if (++Count > 7)
-                break;
-
-            DB.collection("post2").findOne({ _id: PostList[I].ID }, { _id : 0, Time: 0 }, function(error2, result2)
-            {
-                if (error2)
-                {
-                    Misc.Log("[DB]: " + error2);
-                    return res.json({ Message: -1 });
-                }
-
-                if (result !== null)
-                {
-
-                }
-
-                if (++Count2 > 7)
-                    resolve(Result);
-            });
-        }
-    })
-    .then((Result) =>
-    {
-        res.json({ Message: 0, Result: Result })
     });
-});*/
+});
 
 module.exports = PostRouter;
