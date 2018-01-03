@@ -73,7 +73,7 @@ AuthRouter.post('/SignInGoogle', RateLimit(30, 60), function(req, res)
                     if (typeof result2.AvatarServer !== 'undefined' && result2.AvatarServer !== null && typeof result2.Avatar !== 'undefined' && result2.Avatar !== null)
                         Avatar = Upload.ServerURL(result2.AvatarServer) + result2.Avatar;
 
-                    DB.collection("account").updateOne({ _id: result2._id }, { $push: { Session: { Name: Session, Token: Token, Time: Misc.Time } } });
+                    DB.collection("account").updateOne({ _id: result2._id }, { $push: { Session: { Name: Session, Token: Token, Time: Misc.Time() } } });
 
                     return res.json({ Message: 0, Registered: true, Token: Token, ID: result2._id, Username: result2.Username, Avatar: Avatar });
                 }
@@ -184,7 +184,7 @@ AuthRouter.post('/SignInGoogleVerify', RateLimit(30, 60), function(req, res)
             if (PayLoad['aud'] !== '590625045379-pnhlgdqpr5i8ma705ej7akcggsr08vdf.apps.googleusercontent.com')
                 return res.json({ Message: 12 });
 
-            var Time = Misc.Time;
+            var Time = Misc.Time();
             var IP = req.connection.remoteAddress;
 
             if (typeof Session === 'undefined' || Session === '')
@@ -300,7 +300,7 @@ AuthRouter.post('/SignUpPhone', RateLimit(2, 60), function(req, res)
 
         var Key = Misc.RandomNumber(5);
 
-        DB.collection("register").insertOne({ Type: 0, Code: Code, Phone: Phone, Key: Key, Time: Misc.Time }, function(error2)
+        DB.collection("register").insertOne({ Type: 0, Code: Code, Phone: Phone, Key: Key, Time: Misc.Time() }, function(error2)
         {
             if (error2)
             {
@@ -310,7 +310,7 @@ AuthRouter.post('/SignUpPhone', RateLimit(2, 60), function(req, res)
 
             var Message = 'کد تاییدیه شما در بیوگرام' + '\n\n' + Key + '\n\n' + 'Biogram.co';
 
-            Request.post({ url: 'http://niksms.com/fa/PublicApi/GroupSms', form: { message: Message, numbers: (Code + Phone), yourMessageIds: Misc.Time, senderNumber: '30006179', username: '09385454764', password: 'Salam123', sendType: 1, sendOn: null }}, function(error3)
+            Request.post({ url: 'http://niksms.com/fa/PublicApi/GroupSms', form: { message: Message, numbers: (Code + Phone), yourMessageIds: Misc.Time(), senderNumber: '30006179', username: '09385454764', password: 'Salam123', sendType: 1, sendOn: null }}, function(error3)
             {
                 if (error3)
                 {
@@ -365,7 +365,7 @@ AuthRouter.post('/SignInPhone', RateLimit(2, 60), function(req, res)
 
         var Key = Misc.RandomNumber(5);
 
-        DB.collection("register").insertOne({ Type: 1, Code: Code, Phone: Phone, Key: Key, Time: Misc.Time }, function(error2)
+        DB.collection("register").insertOne({ Type: 1, Code: Code, Phone: Phone, Key: Key, Time: Misc.Time() }, function(error2)
         {
             if (error2)
             {
@@ -375,7 +375,7 @@ AuthRouter.post('/SignInPhone', RateLimit(2, 60), function(req, res)
 
             var Message = 'کد تاییدیه شما در بیوگرام' + '\n\n' + Key + '\n\n' + 'Biogram.co';
 
-            Request.post({ url: 'http://niksms.com/fa/PublicApi/GroupSms', form: { message: Message, numbers: (Code + Phone), yourMessageIds: Misc.Time, senderNumber: '30006179', username: '09385454764', password: 'Salam123', sendType: 1, sendOn: null }}, function(error3)
+            Request.post({ url: 'http://niksms.com/fa/PublicApi/GroupSms', form: { message: Message, numbers: (Code + Phone), yourMessageIds: Misc.Time(), senderNumber: '30006179', username: '09385454764', password: 'Salam123', sendType: 1, sendOn: null }}, function(error3)
             {
                 if (error3)
                 {
@@ -502,7 +502,7 @@ AuthRouter.post('/SignInPhoneVerify', RateLimit(60, 60), function(req, res)
             if (typeof result1.AvatarServer !== 'undefined' && result1.AvatarServer !== null && typeof result1.Avatar !== 'undefined' && result1.Avatar !== null)
                 Avatar = Upload.ServerURL(result1.AvatarServer) + result1.Avatar;
 
-            DB.collection("account").updateOne({ _id: result1._id }, { $push: { Session: { Name: Session, Token: Token, Time: Misc.Time } } });
+            DB.collection("account").updateOne({ _id: result1._id }, { $push: { Session: { Name: Session, Token: Token, Time: Misc.Time() } } });
 
             res.json({ Message: 0, Token: Token, ID: result1._id, Username: result1.Username, Avatar: Avatar });
         });
@@ -567,7 +567,7 @@ AuthRouter.post('/SignUpEmail', RateLimit(30, 60), function(req, res)
                 return res.json({ Message: -3 });
             }
 
-            var Time = Misc.Time;
+            var Time = Misc.Time();
             var Key = Misc.RandomNumber(5);
 
             DB.collection("register").insertOne({ Username: Username, Password: result1, Type: 2, Email: Email, Key: Key, Time: Time }, function(error2, result2)
@@ -686,7 +686,7 @@ AuthRouter.post('/SignInEmail', RateLimit(30, 60), function(req, res)
                 if (typeof result1.AvatarServer !== 'undefined' && result1.AvatarServer !== null && typeof result1.Avatar !== 'undefined' && result1.Avatar !== null)
                     Avatar = Upload.ServerURL(result1.AvatarServer) + result1.Avatar;
 
-                DB.collection("account").updateOne({ _id: result._id }, { $push: { Session: { Name: Session, Token: Token, Time: Misc.Time } } });
+                DB.collection("account").updateOne({ _id: result._id }, { $push: { Session: { Name: Session, Token: Token, Time: Misc.Time() } } });
 
                 res.json({ Message: 0, Token: Token, ID: result._id, Username: Username, Avatar: Avatar});
             });
@@ -730,7 +730,7 @@ AuthRouter.post('/SignInEmail', RateLimit(30, 60), function(req, res)
                 if (typeof result1.AvatarServer !== 'undefined' && result1.AvatarServer !== null && typeof result1.Avatar !== 'undefined' && result1.Avatar !== null)
                     Avatar = Upload.ServerURL(result1.AvatarServer) + result1.Avatar;
 
-                DB.collection("account").updateOne({ _id: result._id }, { $push: { Session: { Name: Session, Token: Token, Time: Misc.Time } } });
+                DB.collection("account").updateOne({ _id: result._id }, { $push: { Session: { Name: Session, Token: Token, Time: Misc.Time() } } });
 
                 res.json({ Message: 0, Token: Token, ID: result._id, Username: Username, Avatar: Avatar});
             });
@@ -765,7 +765,7 @@ AuthRouter.post('/ResetPassword', RateLimit(30, 60), function(req, res)
 
             var RandomString = Misc.RandomString(25);
 
-            DB.collection("recovery_password").insertOne({ ID: result._id, Username: EmailOrUsername, Email: result.Email, Key: RandomString, Time: Misc.Time });
+            DB.collection("recovery_password").insertOne({ ID: result._id, Username: EmailOrUsername, Email: result.Email, Key: RandomString, Time: Misc.Time() });
 
             var URL = "http://biogram.co/RecoveryPassword/" + RandomString;
             var To = EmailOrUsername + " <" + result.Email + ">";
@@ -797,7 +797,7 @@ AuthRouter.post('/ResetPassword', RateLimit(30, 60), function(req, res)
 
             var RandomString = Misc.RandomString(25);
 
-            DB.collection("recovery_password").insertOne({ ID: result._id, Username: result.Username, Email: EmailOrUsername, Key: RandomString, Time: Misc.Time });
+            DB.collection("recovery_password").insertOne({ ID: result._id, Username: result.Username, Email: EmailOrUsername, Key: RandomString, Time: Misc.Time() });
 
             var URL = "http://biogram.co/RecoveryPassword/" + RandomString;
             var To = result.Username + " <" + EmailOrUsername + ">";
@@ -874,7 +874,7 @@ AuthRouter.post('/SignUpPhoneFinish', RateLimit(30, 60), function(req, res)
             if (result1 === null)
                 return res.json({ Message: 9 });
 
-            var Time = Misc.Time;
+            var Time = Misc.Time();
             var IP = req.connection.remoteAddress;
 
             if (typeof Session === 'undefined' || Session === '')
@@ -992,7 +992,7 @@ AuthRouter.post('/SignUpEmailFinish', RateLimit(30, 60), function(req, res)
             if (result1 === null)
                 return res.json({ Message: 9 });
 
-            var Time = Misc.Time;
+            var Time = Misc.Time();
             var Username = result1.Username;
             var IP = req.connection.remoteAddress;
 

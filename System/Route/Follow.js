@@ -50,7 +50,7 @@ FollowRouter.post('/Follow', Auth(), RateLimit(120, 60), function(req, res)
             }
             else
             {
-                DB.collection("follow").insertOne({ OwnerID: OwnerID, Follower: FollowerID, Time: Misc.Time });
+                DB.collection("follow").insertOne({ OwnerID: OwnerID, Follower: FollowerID, Time: Misc.Time() });
                 res.json({ Message: 0, Follow: true });
             }
 

@@ -11,7 +11,7 @@ MiscRouter.post('/Crash', Auth(), RateLimit(30, 60), function(req, res)
     if (typeof Crash === 'undefined' || Crash === '')
         return res.json({ Message: 1 });
 
-    DB.collection("crash").insertOne({ Crash: Crash, Time: Misc.Time });
+    DB.collection("crash").insertOne({ Crash: Crash, Time: Misc.Time() });
 
     var Transporter = NodeMailer.createTransport(
     {
@@ -23,7 +23,7 @@ MiscRouter.post('/Crash', Auth(), RateLimit(30, 60), function(req, res)
         }
     });
 
-    var MailOptions = { from: 'Biogram Crash ' + Misc.Time + ' <crash@biogram.co>', to: 'dev.khazaee@gmail.com', subject: 'Biogram -- Crash -- ' + Misc.Time, text: Crash };
+    var MailOptions = { from: 'Biogram Crash ' + Misc.Time() + ' <crash@biogram.co>', to: 'dev.khazaee@gmail.com', subject: 'Biogram -- Crash -- ' + Misc.Time(), text: Crash };
 
     Transporter.sendMail(MailOptions, function(error)
     {

@@ -48,7 +48,7 @@ function SendNotification(OwnerID, SenderID, Type, Avatar, PostID)
         Client.Socket.emit('Notification', { OwnerID: OwnerID, SenderID: SenderID, Type: Type, Avatar: Avatar, PostID: PostID });
     }
 
-    DB.collection("notification").insertOne({ OwnerID: OwnerID, SenderID: SenderID, Type: Type, Seen: Seen, PostID: PostID, Time: Misc.Time });
+    DB.collection("notification").insertOne({ OwnerID: OwnerID, SenderID: SenderID, Type: Type, Seen: Seen, PostID: PostID, Time: Misc.Time() });
 }
 
 module.exports.SendNotification = SendNotification;

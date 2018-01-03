@@ -6,7 +6,7 @@ const Auth       = require('../Handler/Auth');
 const Post       = require('../Model/Post');
 const Misc       = require('../Handler/Misc');
 
-PostRouter.post('/PostWrite', Auth(), RateLimit(60, 3600), function(req, res)
+PostRouter.post('/PostWrite', Auth(), RateLimit(60, 1800), function(req, res)
 {
     const Form = new Formidable.IncomingForm();
     Form.uploadDir = "./System/Storage/Temp/";
@@ -122,7 +122,8 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 3600), function(req, res)
             break;
         }
 
-        let Result = { Owner: res.locals.ID, World: World, Category: Category, Type: Type, Time: Misc.Time };
+        let Owner = res.locals.ID;
+        let Result = { Owner: Owner, World: World, Category: Category, Type: Type, Time: Misc.Time() };
 
         if (Type === 1 || Type === 2 || Type === 4)
             Result.Server = ServerID;
@@ -144,43 +145,37 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 3600), function(req, res)
 
         if (ResultMessage !== undefined && ResultMessage.length > 0)
         {
-            /* TODO Add HashTag To DataBase
-                preg_match_all('/@(\w+)/', $Message, $UsernameList);
-                $UsernameList = explode(',', implode(',', $UsernameList[1]));
+            let UsernameList = ResultMessage.match(/@(\w+)/gi);
 
-                if (count($UsernameList) > 0)
+            if (UsernameList !== null)
+            {
+                for (let I = 0; I < UsernameList.length; I++)
                 {
-                    for ($X = 0; $X < count($UsernameList); $X++)
+                    let Account = await DB.collection("account").find({ Username: UsernameList[I] }).project({ Username: 1 }).limit(1).toArray();
+
+                    if (Account[0].Username === undefined || Account[0].Username === '' || Account[0].Username === null)
+                        continue;
+
+                    if (Account[0]._id !== Owner)
                     {
-                        $Account = $App->DB->Find('account', ['Username' => $UsernameList[$X]], ["projection" => ["_id" => 1]])->toArray();
-
-                        if (empty($Account))
-                            continue;
-
-                        if ($Account[0]->_id != $OwnerID)
-                            $App->DB->Insert('notification', ["OwnerID" => $Account[0]->_id, "SenderID" => $OwnerID, "PostID" => $PostID, "Seen" => 0, "Type" => 1, "Time" => time()]);
+                        // TODO Add Notification
+                        // TODO Send Notification
                     }
                 }
+            }
 
-                preg_match_all('/#(\w+)/u', $Message, $HashTagList);
-                $HashTagList = explode(',', implode(',', $HashTagList[1]));
+            let TagList = ResultMessage.match(/#(\w+)/ugi);
 
-                if (count($HashTagList) > 0)
-                {
-                    for ($X = 0; $X < count($HashTagList); $X++)
-                    {
-                        if (!isset($App->DB->Find('tag', ['Tag' => $HashTagList[$X]])->toArray()[0]))
-                            $App->DB->Insert('tag', ['Tag' => strtolower($HashTagList[$X])]);
-                    }
-                }
-             */
+            if (TagList !== null)
+                for (let I = 0; I < TagList.length; I++)
+                    DB.collection("tag").updateOne({ Tag: TagList[I].toLowerCase() }, { $set: { Tag: TagList[I].toLowerCase() } }, { upsert: true });
         }
 
-        res.json({ Message: 0, Post: Result });
+        res.json({ Message: 0, Result: Result });
     });
 });
 
-PostRouter.post('/PostListInbox', Auth(), RateLimit(10, 60), async function(req, res)
+PostRouter.post('/PostListInbox', Auth(), RateLimit(30, 60), async function(req, res)
 {
     const ID = res.locals.ID;
 
@@ -247,26 +242,47 @@ PostRouter.post('/PostListInbox', Auth(), RateLimit(10, 60), async function(req,
                                 return res.json({ Message: -1 });
                             }
 
-                            let Server;
                             let Avatar = '';
-                            let Account = await DB.collection("account").find({ _id: result.Owner }).project({ _id: 0, Name: 1, Username: 1, Avatar: 1, AvatarServer: 1 }).limit(1).toArray();
+                            let Account = await DB.collection("account").find({ _id: result.Owner }).project({ _id: 0, Name: 1, Medal: 1, Username: 1, Avatar: 1, AvatarServer: 1 }).limit(1).toArray();
                             let IsLike = await DB.collection("post_like").find({ $and: [ { Owner: ID }, { PostID: result._id } ] }).count();
                             let IsFollow = await DB.collection("follow").find({ $and: [ { Following: ID }, { Follower: result.Owner } ] }).count();
                             let IsBookmark = await DB.collection("post_bookmark").find({ $and: [ { Owner: ID }, { PostID: result._id } ] }).count();
                             let LikeCount = await DB.collection("post_like").find({ PostID: result._id }).count();
                             let CommentCount = await DB.collection("post_comment").find({ PostID: result._id }).count();
 
-                            if (Account.Avatar !== undefined && Account.Avatar !== null && Account.AvatarServer !== undefined && Account.AvatarServer !== null)
-                                Avatar = Upload.ServerURL(Account.AvatarServer) + Account.Avatar;
+                            if (Account[0].Avatar !== undefined && Account[0].Avatar !== null && Account[0].AvatarServer !== undefined && Account[0].AvatarServer !== null)
+                                Avatar = Upload.ServerURL(Account[0].AvatarServer) + Account[0].Avatar;
 
-                            if (result.Server !== undefined && Account.Server !== null)
-                                Server = Upload.ServerURL(result.Server);
+                            if (result.Server !== undefined && result.Server !== null)
+                            {
+                                let Server = Upload.ServerURL(result.Server);
 
-                            Result.push({ ID: result._id, Message: result.Message, Server: Server, Type: result.Type,
-                                          Data: result.Data, View: result.View, Category: result.Category,
-                                          Owner: result.Owner, Time: result.Time, Avatar: Avatar,
-                                          LikeCount: LikeCount, CommentCount: CommentCount, Like: IsLike,
-                                          Follow: IsFollow, Comment: result.Comment, Bookmark: IsBookmark });
+                                if (result.Type === 2 || result.Type === 4)
+                                    result.Data.URL = Server + result.Data.URL;
+
+                                if (result.Type === 1)
+                                    result.Data.forEach(function(c, i) { result.Data[i] = Server + c; });
+                            }
+
+                            Result.push({
+                                ID: result._id,
+                                Profile: Avatar,
+                                Name: Account[0].Name,
+                                Medal: Account[0].Medal,
+                                Username: Account[0].Username,
+                                Time: result.Time,
+                                Message: result.Message,
+                                Type: result.Type,
+                                Data: result.Data,
+                                Owner: result.Owner,
+                                View: result.View,
+                                Category: result.Category,
+                                LikeCount: LikeCount,
+                                CommentCount: CommentCount,
+                                Like: IsLike,
+                                Follow: IsFollow,
+                                Comment: result.Comment,
+                                Bookmark: IsBookmark });
 
                             if (++Count >= Size)
                                 res.json({ Message: 0, Result: Result });

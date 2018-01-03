@@ -86,7 +86,7 @@ function AdminAuth()
 
 function CreateToken(ID)
 {
-    let Segment = StringReplace('=', '', StringTrim(Buffer.from(JSON.stringify({ ID: ID, Time : Misc.Time }).toString()).toString('base64'), '+/', '-_'));
+    let Segment = StringReplace('=', '', StringTrim(Buffer.from(JSON.stringify({ ID: ID, Time : Misc.Time() }).toString()).toString('base64'), '+/', '-_'));
 
     let Signer = Crypto.createSign('sha256');
     Signer.update(Segment);

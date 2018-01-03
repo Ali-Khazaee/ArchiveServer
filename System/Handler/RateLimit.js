@@ -7,7 +7,7 @@ function RateLimit(Count, ExpireTime)
         const IP = req.connection.remoteAddress;
         const URL = req.originalUrl.substr(1);
 
-        DB.collection("ratelimit").findOneAndUpdate({ IP: IP, URL: URL }, { $inc: { Count: 1 } }, { projection: { _id: 0, Count: 1, Time: 1 } }, function(error, result)
+        DB.collection("ratelimit").findOneAndUpdate({ IP: IP, URL: URL }, { $inc: { Count: 1 } }, { projection: { Count: 1, Time: 1 } }, function(error, result)
         {
             if (error)
             {
@@ -15,7 +15,7 @@ function RateLimit(Count, ExpireTime)
                 return res.json({ Message: -1 });
             }
 
-            const Time = Misc.Time;
+            const Time = Misc.Time();
 
             if (result.value === null)
             {
