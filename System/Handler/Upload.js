@@ -13,15 +13,17 @@ function ServerToken(ID)
     }
 
     Misc.Log('Upload-ServerToken: Wrong ID ( ' + ID + ' )');
-    return '';
+
+    return undefined;
 }
 
 function ServerURL(ID)
 {
-    if (typeof ServerList[ID] === 'undefined' || ServerList[ID] === null)
+    if (ServerList[ID] === undefined || ServerList[ID] === null)
     {
         Misc.Log('Upload-ServerURL: Wrong ID ( ' + ID + ' )');
-        return '';
+
+        return undefined;
     }
 
     return ServerList[ID].URL;
@@ -38,25 +40,23 @@ function BestServerID()
         {
             Request.post({ url: Server.URL + "/StorageSpace", form: { Password: ServerToken(Server.ID) } }, function(error, httpResponse, body)
             {
-                Count++;
-
                 try
                 {
-                    Result.push([ 0, JSON.parse(body).Space ]);
+                    Result.push({ "ID": Server.ID, "Space": JSON.parse(body).Space });
                 }
                 catch (e)
                 {
                     Misc.Log('Upload-BestServerID: ' + e + " -- " + error + " -- " + httpResponse + " -- " + body);
                 }
 
-                if (Count >= ServerList.length)
-                    resolve(Result);
+                if (++Count >= ServerList.length)
+                {
+                    const HighSpace = Math.max.apply(Math, Result.map(function(i) { return i.Space; }));
+
+                    return Result.find(function(i) { return i.Space === HighSpace; }).ID;
+                }
             });
         }
-    })
-    .then(function(Result)
-    {
-        return Result.reduce(function(max, array) { return Math.max(max, array[0]); }, -Infinity);
     });
 }
 

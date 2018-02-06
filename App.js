@@ -29,6 +29,11 @@ function(error, database)
     App.use(BodyParser.json());
     App.use(BodyParser.urlencoded({ extended: true }));
 
+    App.use('/', require('./System/Route/PostLike'));
+    App.use('/', require('./System/Route/PostVote'));
+    App.use('/', require('./System/Route/PostWrite'));
+    App.use('/', require('./System/Route/PostListInbox'));
+
     App.use('/', require('./System/Route/Admin'));
     App.use('/', require('./System/Route/Auth'));
     App.use('/', require('./System/Route/Follow'));

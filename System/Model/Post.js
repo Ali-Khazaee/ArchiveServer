@@ -56,7 +56,7 @@ function UploadVideo(URL, Pass, File)
         }
         else
         {
-            let Video = './System/Storage/Temp/' + UniqueName() + ".mp4";
+            const Video = './System/Storage/Temp/' + UniqueName() + ".mp4";
 
             FFMPEG(File.path).output(Video).renice(-10).on('end', function()
             {
@@ -95,7 +95,7 @@ function UploadFile(URL, Pass, File)
             try
             {
                 FS.unlink(File.path, function() { });
-                resolve({ Size: File.size, URL: JSON.parse(body).Path });
+                resolve({ Size: File.size, URL: JSON.parse(body).Path, Name: File.name, Ext: "." + File.name.split('.').pop().toLowerCase() });
             }
             catch (e)
             {
