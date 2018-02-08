@@ -53,7 +53,7 @@ function BestServerID()
                 {
                     const HighSpace = Math.max.apply(Math, Result.map(function(i) { return i.Space; }));
 
-                    return Result.find(function(i) { return i.Space === HighSpace; }).ID;
+                    resolve(Result.find(function(i) { return i.Space === HighSpace; }).ID);
                 }
             });
         }
