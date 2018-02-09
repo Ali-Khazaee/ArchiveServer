@@ -2,7 +2,7 @@ const Request    = require('request');
 const FS         = require('fs');
 const FFMPEG     = require('fluent-ffmpeg');
 const UniqueName = require('uuid/v4');
-const Misc       = require('../Handler/Misc');
+const Misc       = require('./Misc');
 
 // For Windows
 // FFMPEG.setFfmpegPath('./System/FFmpeg/ffmpeg.exe');

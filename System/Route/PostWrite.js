@@ -3,7 +3,7 @@ const Formidable = require('formidable');
 const RateLimit  = require('../Handler/RateLimit');
 const Upload     = require('../Handler/Upload');
 const Auth       = require('../Handler/Auth');
-const Post       = require('../Model/Post');
+const Post       = require('../Handler/Post');
 const Misc       = require('../Handler/Misc');
 
 PostRouter.post('/PostWrite', Auth(), RateLimit(60, 1800), function(req, res)
@@ -86,7 +86,7 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 1800), function(req, res)
                 {
                     let VoteObj = JSON.parse(Vote);
 
-                    if (VoteObj.Vote1 === undefined || VoteObj.Vote1.length <= 0 || VoteObj.Vote2 === undefined || VoteObj.Vote2.length <= 0 || VoteObj.Time === undefined)
+                    if (VoteObj.Vote1 === undefined || VoteObj.Vote1.length <= 0 || VoteObj.Vote2 === undefined || VoteObj.Vote2.length <= 0 || VoteObj.Time === undefined || VoteObj.Time < Misc.Time())
                         return res.json({ Message: 3 });
 
                     let VoteObj2 = { Vote1: VoteObj.Vote1, Vote2: VoteObj.Vote2, Time: VoteObj.Time };
