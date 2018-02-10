@@ -23,7 +23,7 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 1800), function(req, res)
         let Category = fields.Category;
         const Type = parseInt(fields.Type);
         const Vote = fields.Vote;
-        let World = fields.World;
+        const World = fields.World;
 
         if (Type === undefined || isNaN(Type) || Type === null || Type === '' || Type > 4 || Type < 0)
             return res.json({ Message: 1 });
@@ -36,9 +36,6 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 1800), function(req, res)
 
         if (Message !== undefined && Message.length > 300)
             Message = Message.substr(0, 300);
-
-        if (World === undefined || World === '')
-            World = 0;
 
         let NewLine = 0;
         let ResultMessage = "";
@@ -89,7 +86,7 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 1800), function(req, res)
                     if (VoteObj.Vote1 === undefined || VoteObj.Vote1.length <= 0 || VoteObj.Vote2 === undefined || VoteObj.Vote2.length <= 0 || VoteObj.Time === undefined || VoteObj.Time < Misc.Time())
                         return res.json({ Message: 3 });
 
-                    let VoteObj2 = { Vote1: VoteObj.Vote1, Vote2: VoteObj.Vote2, Time: VoteObj.Time };
+                    let VoteObj2 = { Vote1: VoteObj.Vote1, Vote2: VoteObj.Vote2 };
 
                     if (VoteObj.Vote3 !== undefined && VoteObj.Vote3.length > 0)
                         VoteObj2.Vote3 = VoteObj.Vote3;
@@ -99,6 +96,8 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 1800), function(req, res)
 
                     if (VoteObj.Vote5 !== undefined && VoteObj.Vote5.length > 0)
                         VoteObj2.Vote5 = VoteObj.Vote5;
+
+                    VoteObj2.Time = VoteObj.Time;
 
                     Data.push(VoteObj2);
                 }
@@ -125,34 +124,28 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 1800), function(req, res)
         if (ResultMessage !== undefined && ResultMessage.length > 0)
             Result.Message = ResultMessage;
 
-        if (Type === 1)
-            Result.Data = Data;
-        else if (Type === 2 || Type === 3 || Type === 4)
-            Result.Data = Data[0];
+        Result.Data = (Type === 1) ? Data : Data[0];
 
         await DB.collection("post").insertOne(Result);
 
         if (ResultMessage !== undefined && ResultMessage.length > 0)
         {
-            let AccountList = ResultMessage.match(/@(\w+)/gi);
+            const AccountList = ResultMessage.match(/@(\w+)/gi);
 
             if (AccountList !== null)
             {
                 for (let I = 0; I < AccountList.length; I++)
                 {
-                    let Account = await DB.collection("account").find({ Username: AccountList[I] }).project({ Username: 1 }).limit(1).toArray();
+                    const Account = await DB.collection("account").aggregate([ { $match: { Username: AccountList[I] } }, { $group: { _id: "$_id", Count: { $sum: 1 } } } ]).toArray();
 
-                    if (Account[0].Username === undefined || Account[0].Username === '' || Account[0].Username === null)
+                    if (Account[0] === undefined || Owner.equals(Account[0]._id))
                         continue;
 
-                    if (Account[0]._id !== Owner)
-                    {
-                        // TODO Add Notification
-                    }
+                    // TODO Add Notification
                 }
             }
 
-            let TagList = ResultMessage.match(/#(\w+)/ugi);
+            const TagList = ResultMessage.match(/#(\w+)/ugi);
 
             if (TagList !== null)
                 for (let I = 0; I < TagList.length; I++)
@@ -161,7 +154,7 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 1800), function(req, res)
 
         if (Result.Server !== undefined && Result.Server !== null)
         {
-            let Server = Upload.ServerURL(Result.Server);
+            const Server = Upload.ServerURL(Result.Server);
 
             if (Result.Type === 2 || Result.Type === 4)
                 Result.Data.URL = Server + Result.Data.URL;

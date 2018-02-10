@@ -28,21 +28,19 @@ function(error, database)
 
     App.use(BodyParser.json());
     App.use(BodyParser.urlencoded({ extended: true }));
+    App.get('/', function (req, res) { res.send(''); });
 
+    App.use('/', require('./System/Route/Auth'));
+
+    App.use('/', require('./System/Route/PostBookmark'));
     App.use('/', require('./System/Route/PostLike'));
+    App.use('/', require('./System/Route/PostListInbox'));
+    App.use('/', require('./System/Route/PostReport'));
     App.use('/', require('./System/Route/PostVote'));
     App.use('/', require('./System/Route/PostWrite'));
-    App.use('/', require('./System/Route/PostListInbox'));
 
-    App.use('/', require('./System/Route/Admin'));
-    App.use('/', require('./System/Route/Auth'));
-    App.use('/', require('./System/Route/Follow'));
-    App.use('/', require('./System/Route/Misc'));
-    App.use('/', require('./System/Route/Notification'));
-    App.use('/', require('./System/Route/Post'));
-    App.use('/', require('./System/Route/Profile'));
-    App.use('/', require('./System/Route/Search'));
-    App.get('/', function (req, res) { res.send(''); });
+    App.use('/', require('./System/Route/ProfileBlock'));
+    App.use('/', require('./System/Route/ProfileFollow'));
 
     HTTP.listen(CoreConfig.PORT, "0.0.0.0", function()
     {
