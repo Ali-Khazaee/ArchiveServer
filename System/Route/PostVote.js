@@ -7,24 +7,24 @@ PostRouter.post('/PostVote', Auth(), RateLimit(30, 60), async function(req, res)
 {
     const Vote = req.body.Vote;
 
-    if (Vote === undefined || (Vote > 5 && Vote < 1))
+    if (Misc.IsUndefined(Vote) || (Vote > 5 && Vote < 1))
         return res.json({ Message: 1 });
 
     const PostID = MongoID(req.body.Post);
 
-    if (PostID === undefined || PostID === '')
+    if (Misc.IsUndefined(PostID))
         return res.json({ Message: 2 });
 
-    const Post = await DB.collection("post").aggregate([ { $match: { _id: PostID } }, { $group: { _id: { ID: "$_id", Data: "$Data" }, Count: { $sum: 1 } } } ]).toArray();
+    const Post = await DB.collection("post").aggregate([ { $match: { _id: PostID } }, { $project: { _id: 1, Data: 1 } } ]).toArray();
 
-    if (Post[0].Count === undefined || Post[0].Count === null)
+    if (Misc.IsUndefined(Post[0]))
         return res.json({ Message: 2 });
 
     const Time = Misc.Time();
     const Owner = res.locals.ID;
-    const VoteData = await DB.collection("post_vote").findOne({ $and: [ { Owner: Owner }, { Post: PostID } ] });
+    const VoteData = await DB.collection("post_vote").aggregate([ { $match: { $and: [ { Owner: Owner }, { Post: PostID } ] } }, { $project: { _id: 1 } } ]);
 
-    if ((VoteData !== undefined && VoteData !== null) || Time > Post[0]._id.Data.Time)
+    if (!Misc.IsUndefined(VoteData[0]) || Time > Post[0].Data.Time)
         return res.json({ Message: 4 });
 
     await DB.collection("post_vote").insertOne({ Owner: Owner, Post: PostID, Vote: Vote, Time: Time });

@@ -25,16 +25,16 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 1800), function(req, res)
         const Vote = fields.Vote;
         const World = fields.World;
 
-        if (Type === undefined || isNaN(Type) || Type === null || Type === '' || Type > 4 || Type < 0)
+        if (Misc.IsUndefined(Type) ||  Type > 4 || Type < 0)
             return res.json({ Message: 1 });
 
-        if (Type === 0 && (Message === undefined || Message.length < 30))
+        if (Type === 0 && (Misc.IsUndefined(Message) || Message.length < 30))
             return res.json({ Message: 2 });
 
-        if (Category === undefined || Category === '' || Category > 22 || Category < 1)
+        if (Misc.IsUndefined(Category) || Category > 22 || Category < 1)
             Category = 100;
 
-        if (Message !== undefined && Message.length > 300)
+        if (!Misc.IsUndefined(Message) && Message.length > 300)
             Message = Message.substr(0, 300);
 
         let NewLine = 0;
@@ -65,54 +65,54 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 1800), function(req, res)
 
                 Data.push(await Post.UploadImage(ServerURL, ServerPass, files.Image1));
 
-                if (files.Image2 !== undefined && files.Image2 !== null && files.Image1.size < 6291456)
+                if (files.Image2 !== undefined && files.Image2 !== null && files.Image2.size < 6291456)
                     Data.push(await Post.UploadImage(ServerURL, ServerPass, files.Image2));
 
-                if (files.Image3 !== undefined && files.Image3 !== null && files.Image1.size < 6291456)
+                if (files.Image3 !== undefined && files.Image3 !== null && files.Image3.size < 6291456)
                     Data.push(await Post.UploadImage(ServerURL, ServerPass, files.Image3));
             }
-            break;
+                break;
             case 2:
                 if (files.Video === undefined || files.Video === null)
                     return res.json({ Message: 3 });
 
                 Data.push(await Post.UploadVideo(ServerURL, ServerPass, files.Video));
-            break;
+                break;
             case 3:
                 try
                 {
-                    let VoteObj = JSON.parse(Vote);
+                    let OldVote = JSON.parse(Vote);
 
-                    if (VoteObj.Vote1 === undefined || VoteObj.Vote1.length <= 0 || VoteObj.Vote2 === undefined || VoteObj.Vote2.length <= 0 || VoteObj.Time === undefined || VoteObj.Time < Misc.Time())
+                    if (Misc.IsUndefined(OldVote.Vote1) || Misc.IsUndefined(OldVote.Vote2) || Misc.IsUndefined(OldVote.Time) || OldVote.Time < Misc.Time())
                         return res.json({ Message: 3 });
 
-                    let VoteObj2 = { Vote1: VoteObj.Vote1, Vote2: VoteObj.Vote2 };
+                    let NewVote = { Vote1: OldVote.Vote1, Vote2: OldVote.Vote2 };
 
-                    if (VoteObj.Vote3 !== undefined && VoteObj.Vote3.length > 0)
-                        VoteObj2.Vote3 = VoteObj.Vote3;
+                    if (!Misc.IsUndefined(OldVote.Vote3))
+                        NewVote.Vote3 = OldVote.Vote3;
 
-                    if (VoteObj.Vote4 !== undefined && VoteObj.Vote4.length > 0)
-                        VoteObj2.Vote4 = VoteObj.Vote4;
+                    if (!Misc.IsUndefined(OldVote.Vote4))
+                        NewVote.Vote4 = OldVote.Vote4;
 
-                    if (VoteObj.Vote5 !== undefined && VoteObj.Vote5.length > 0)
-                        VoteObj2.Vote5 = VoteObj.Vote5;
+                    if (!Misc.IsUndefined(OldVote.Vote5))
+                        NewVote.Vote5 = OldVote.Vote5;
 
-                    VoteObj2.Time = VoteObj.Time;
+                    NewVote.Time = OldVote.Time;
 
-                    Data.push(VoteObj2);
+                    Data.push(NewVote);
                 }
                 catch (e)
                 {
                     Misc.Log("[PostWrite-2]: " + e);
                     return res.json({ Message: 3 });
                 }
-            break;
+                break;
             case 4:
                 if (files.File === undefined || files.File === null)
                     return res.json({ Message: 3 });
 
                 Data.push(await Post.UploadFile(ServerURL, ServerPass, files.File));
-            break;
+                break;
         }
 
         const Owner = res.locals.ID;
@@ -121,24 +121,24 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 1800), function(req, res)
         if (Type === 1 || Type === 2 || Type === 4)
             Result.Server = ServerID;
 
-        if (ResultMessage !== undefined && ResultMessage.length > 0)
+        if (ResultMessage.length > 0)
             Result.Message = ResultMessage;
 
         Result.Data = (Type === 1) ? Data : Data[0];
 
         await DB.collection("post").insertOne(Result);
 
-        if (ResultMessage !== undefined && ResultMessage.length > 0)
+        if (ResultMessage.length > 0)
         {
             const AccountList = ResultMessage.match(/@(\w+)/gi);
 
-            if (AccountList !== null)
+            if (!Misc.IsUndefined(AccountList))
             {
                 for (let I = 0; I < AccountList.length; I++)
                 {
-                    const Account = await DB.collection("account").aggregate([ { $match: { Username: AccountList[I] } }, { $group: { _id: "$_id", Count: { $sum: 1 } } } ]).toArray();
+                    const Account = await DB.collection("account").aggregate([ { $match: { Username: AccountList[I] } }, { $project: { _id: 1 } } ]).toArray();
 
-                    if (Account[0] === undefined || Owner.equals(Account[0]._id))
+                    if (Misc.IsUndefined(Account[0]) || Owner.equals(Account[0]._id))
                         continue;
 
                     // TODO Add Notification
@@ -147,20 +147,24 @@ PostRouter.post('/PostWrite', Auth(), RateLimit(60, 1800), function(req, res)
 
             const TagList = ResultMessage.match(/#(\w+)/ugi);
 
-            if (TagList !== null)
+            if (!Misc.IsUndefined(TagList))
+            {
                 for (let I = 0; I < TagList.length; I++)
-                    DB.collection("tag").updateOne({ Tag: TagList[I].toLowerCase().slice(1) }, { $set: { Tag: TagList[I].toLowerCase().slice(1) } }, { upsert: true });
+                {
+                    const Tag = TagList[I].toLowerCase().slice(1);
+
+                    DB.collection("tag").updateOne({ Tag: Tag }, { $set: { Tag: Tag } }, { upsert: true });
+                }
+            }
         }
 
-        if (Result.Server !== undefined && Result.Server !== null)
+        if (!Misc.IsUndefined(Result.Server))
         {
-            const Server = Upload.ServerURL(Result.Server);
-
             if (Result.Type === 2 || Result.Type === 4)
-                Result.Data.URL = Server + Result.Data.URL;
+                Result.Data.URL = ServerURL + Result.Data.URL;
 
             if (Result.Type === 1)
-                Result.Data.forEach(function(c, i) { Result.Data[i] = Server + c; });
+                Result.Data.forEach(function(c, i) { Result.Data[i] = ServerURL + c; });
         }
 
         res.json({ Message: 0, Result: Result });

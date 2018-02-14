@@ -60,7 +60,59 @@ function RandomNumber(Count)
     return Result;
 }
 
+async function IsBlock(Owner, Target)
+{
+    const Block = await DB.collection("follow").find({ $and: [ { Owner: Owner }, { Target: Target } ] }).count();
+
+    return Block !== 0;
+}
+
+function IsUndefined(Value)
+{
+    if (typeof Value === 'undefined' || Value === undefined || Value === null || Value == null)
+        return true;
+
+    if (typeof Value === 'object' && Value.constructor === MongoID)
+        return false;
+
+    if (typeof Value === 'object' && Value.constructor === Array && Value.length > 0)
+        return false;
+
+    if (typeof Value === 'object' && Value.constructor === Array && Value.length === 0)
+        return true;
+
+    if (typeof Value === 'string' && Value.length > 0)
+        return false;
+
+    if (typeof Value === 'string' && Value.length === 0)
+        return true;
+
+    if (Value.toString === Object.prototype.toString)
+    {
+        switch (Value.toString())
+        {
+            case '[object File]':
+            case '[object Map]':
+            case '[object Set]':
+                return Value.size === 0;
+
+            case '[object Object]':
+            {
+                for (let Key in Value)
+                    if (Object.prototype.hasOwnProperty.call(Value, Key))
+                        return false;
+
+                return true;
+            }
+        }
+    }
+
+    return isNaN(Value);
+}
+
 module.exports.Log = Log;
+module.exports.IsBlock = IsBlock;
+module.exports.IsUndefined = IsUndefined;
 module.exports.SendEmail = SendEmail;
 module.exports.IsValidEmail = IsValidEmail;
 module.exports.RandomString = RandomString;

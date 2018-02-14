@@ -33,7 +33,9 @@ function(error, database)
     App.use('/', require('./System/Route/Auth'));
 
     App.use('/', require('./System/Route/PostBookmark'));
+    App.use('/', require('./System/Route/PostDelete'));
     App.use('/', require('./System/Route/PostLike'));
+    App.use('/', require('./System/Route/PostLikeList'));
     App.use('/', require('./System/Route/PostListInbox'));
     App.use('/', require('./System/Route/PostReport'));
     App.use('/', require('./System/Route/PostVote'));

@@ -7,14 +7,14 @@ PostRouter.post('/ProfileBlock', Auth(), RateLimit(30, 60), async function(req, 
 {
     let Username = req.body.Username;
 
-    if (Username === undefined || Username === '')
+    if (Misc.IsUndefined(Username))
         return res.json({ Message: 1 });
 
     Username = Username.toLowerCase();
 
-    const Account = await DB.collection("account").aggregate([ { $match: { Username: Username } }, { $group: { _id: "$_id", Count: { $sum: 1 } } } ]).toArray();
+    const Account = await DB.collection("account").aggregate([ { $match: { Username: Username } }, { $project: { _id: 1 } } ]).toArray();
 
-    if (Account[0] === undefined)
+    if (Misc.IsUndefined(Account[0]))
         return res.json({ Message: 2 });
 
     const Owner = res.locals.ID;
@@ -22,7 +22,8 @@ PostRouter.post('/ProfileBlock', Auth(), RateLimit(30, 60), async function(req, 
     if (Owner.equals(Account[0]._id))
         return res.json({ Message: 3 });
 
-    DB.collection("block").updateOne({ Owner: Owner, Target: Account[0]._id }, { $set: { Owner: Owner, Target: Account[0]._id, Time: Misc.Time() } }, { upsert: true });
+    DB.collection("block").insertOne({ Owner: Owner, Target: Account[0]._id, Time: Misc.Time() });
+    DB.collection("follow").deleteMany({ $or: [ { $and: [ { Owner: Owner }, { Follow: Account[0]._id } ] }, { $and: [ { Owner: Account[0]._id }, { Follow: Owner } ] } ] });
 
     res.json({ Message: 0 });
 });

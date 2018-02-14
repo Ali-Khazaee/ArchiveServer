@@ -3,22 +3,22 @@ const RateLimit  = require('../Handler/RateLimit');
 const Auth       = require('../Handler/Auth');
 const Misc       = require('../Handler/Misc');
 
-PostRouter.post('/PostBookmark', Auth(), RateLimit(30, 60), async function(req, res)
+PostRouter.post('/PostLike', Auth(), RateLimit(30, 60), async function(req, res)
 {
     const PostID = MongoID(req.body.PostID);
 
-    if (PostID === undefined || PostID === '')
+    if (Misc.IsUndefined(PostID))
         return res.json({ Message: 1 });
 
-    const Post = await DB.collection("post").aggregate([ { $match: { _id: PostID } }, { $group: { _id: null, Count: { $sum: 1 } } } ]).toArray();
+    const Post = await DB.collection("post").aggregate([ { $match: { _id: PostID } }, { $project: { _id: 1 } } ]).toArray();
 
-    if (Post[0].Count === undefined || Post[0].Count === null)
+    if (Misc.IsUndefined(Post[0]))
         return res.json({ Message: 2 });
 
     const Owner = res.locals.ID;
-    const Bookmark = await DB.collection("post_like").aggregate([ { $match: { $and: [ { _id: PostID }, { Owner: Owner } ] } }, { $group: { _id: null, Count: { $sum: 1 } } } ]).toArray();
+    const Like = await DB.collection("post_like").aggregate([ { $match: { $and: [ { Post: PostID }, { Owner: Owner } ] } }, { $project: { _id: 1 } } ]).toArray();
 
-    if (Bookmark[0].Count === undefined || Bookmark[0].Count === null)
+    if (Misc.IsUndefined(Like[0]))
     {
         DB.collection("post_like").insertOne({ Owner: Owner, Post: PostID, Time: Misc.Time() });
 
@@ -26,7 +26,7 @@ PostRouter.post('/PostBookmark', Auth(), RateLimit(30, 60), async function(req, 
     }
     else
     {
-        DB.collection("post_like").deleteOne({ $and: [ { Owner: Owner }, { Post: PostID } ] });
+        DB.collection("post_like").deleteOne({ _id: Like[0]._id });
 
         // TODO Add Notification
     }

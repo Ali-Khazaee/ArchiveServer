@@ -7,17 +7,17 @@ PostRouter.post('/PostReport', Auth(), RateLimit(30, 60), async function(req, re
 {
     const PostID = MongoID(req.body.PostID);
 
-    if (PostID === undefined || PostID === '')
+    if (Misc.IsUndefined(PostID))
         return res.json({ Message: 1 });
 
     const Reason = req.body.Reason;
 
-    if (Reason === undefined || Reason === '')
+    if (Misc.IsUndefined(Reason) || Reason.length < 10)
         return res.json({ Message: 2 });
 
-    const Post = await DB.collection("post").aggregate([ { $match: { _id: PostID } }, { $group: { _id: null, Count: { $sum: 1 } } } ]).toArray();
+    const Post = await DB.collection("post").aggregate([ { $match: { _id: PostID } }, { $project: { _id: 1 } } ]).toArray();
 
-    if (Post[0].Count === undefined || Post[0].Count === null)
+    if (Misc.IsUndefined(Post[0]))
         return res.json({ Message: 3 });
 
     DB.collection("post_report").insertOne({ Owner: res.locals.ID, Post: PostID, Time: Misc.Time(), Reason: Reason });
