@@ -58,7 +58,7 @@ PostRouter.post('/PostListInbox', Auth(), RateLimit(30, 60), async function(req,
         const IsFollow = await DB.collection("follow").find({ $and: [ { Owner: Owner }, { Follow: Post[0].Owner } ] }).count();
         const IsBookmark = await DB.collection("post_bookmark").find({ $and: [ { Owner: Owner }, { Post: Post[0]._id } ] }).count();
         const LikeCount = await DB.collection("post_like").find({ Post: Post[0]._id }).count();
-        const CommentCount = await DB.collection("post_comment").find({ Post: Post[0]._id }).count();
+        const CommentCount = await DB.collection("post_comment").find({ $and: [ { Post: Post[0]._id }, { Delete: { $not: { $gt: 0 } } } ] }).count();
         const Avatar = (Misc.IsUndefined(Account[0]) || Misc.IsUndefined(Account[0].Avatar)) ? '' : Upload.ServerURL(Account[0].AvatarServer) + Account[0].Avatar;
 
         if (Post[0].Type === 3)

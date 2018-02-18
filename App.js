@@ -33,6 +33,11 @@ function(error, database)
     App.use('/', require('./System/Route/Auth'));
 
     App.use('/', require('./System/Route/PostBookmark'));
+    App.use('/', require('./System/Route/PostComment'));
+    App.use('/', require('./System/Route/PostCommentDelete'));
+    App.use('/', require('./System/Route/PostCommentLike'));
+    App.use('/', require('./System/Route/PostCommentLikeList'));
+    App.use('/', require('./System/Route/PostCommentList'));
     App.use('/', require('./System/Route/PostDelete'));
     App.use('/', require('./System/Route/PostLike'));
     App.use('/', require('./System/Route/PostLikeList'));
