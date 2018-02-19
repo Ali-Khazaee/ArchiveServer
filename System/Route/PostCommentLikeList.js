@@ -17,7 +17,7 @@ PostRouter.post('/PostCommentLikeList', Auth(), RateLimit(30, 60), async functio
         Skip = 0;
 
     const Result = [];
-    const PersonList = await DB.collection("comment_like").aggregate([ { $match: { Comment: CommentID } },
+    const PersonList = await DB.collection("post_comment_like").aggregate([ { $match: { Comment: CommentID } },
         { $sort: { Time: -1 } },
         { $skip: Skip },
         { $lookup: { from: "account", localField: "Owner", foreignField: "_id", as: "Data" } },

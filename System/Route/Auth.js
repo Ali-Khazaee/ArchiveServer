@@ -502,6 +502,13 @@ AuthRouter.post('/SignInPhoneVerify', RateLimit(60, 60), function(req, res)
             if (typeof result1.AvatarServer !== 'undefined' && result1.AvatarServer !== null && typeof result1.Avatar !== 'undefined' && result1.Avatar !== null)
                 Avatar = Upload.ServerURL(result1.AvatarServer) + result1.Avatar;
 
+            var Session = req.body.Session;
+
+            if (typeof Session === 'undefined' || Session === '')
+                Session = "Unknown Session - " + IP;
+            else
+                Session = Session + " - " + IP;
+
             DB.collection("account").updateOne({ _id: result1._id }, { $push: { Session: { Name: Session, Token: Token, Time: Misc.Time() } } });
 
             res.json({ Message: 0, Token: Token, ID: result1._id, Username: result1.Username, Avatar: Avatar });
