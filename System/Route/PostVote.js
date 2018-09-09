@@ -22,7 +22,7 @@ PostRouter.post('/PostVote', Auth(), RateLimit(30, 60), async function(req, res)
 
     const Time = Misc.Time();
     const Owner = res.locals.ID;
-    const VoteData = await DB.collection("post_vote").aggregate([ { $match: { $and: [ { Owner: Owner }, { Post: PostID } ] } }, { $project: { _id: 1 } } ]);
+    const VoteData = await DB.collection("post_vote").aggregate([ { $match: { $and: [ { Owner: Owner }, { Post: PostID } ] } }, { $project: { _id: 1 } } ]).toArray();
 
     if (!Misc.IsUndefined(VoteData[0]) || Time > Post[0].Data.Time)
         return res.json({ Message: 4 });

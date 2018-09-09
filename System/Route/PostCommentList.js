@@ -22,8 +22,8 @@ PostRouter.post('/PostCommentList', Auth(), RateLimit(30, 60), async function(re
         { $skip: Skip },
         { $lookup: { from: "account", localField: "Owner", foreignField: "_id", as: "Data" } },
         { $unwind: "$Data" },
-        { $project: { _id: 1, Message: 1, Time: 1, "Data._id": 1, "Data.Username": 1, "Data.Name": 1, "Data.Avatar": 1, "Data.AvatarServer": 1 } },
-        { $group: { _id: { ID: "$_id", Message: "$Message", Time: "$Time", Username: "$Data.Username", Avatar: "$Data.Avatar", Server: "$Data.AvatarServer" } } },
+        { $project: { _id: 1, Owner: 1, Message: 1, Time: 1, "Data._id": 1, "Data.Username": 1, "Data.Name": 1, "Data.Avatar": 1, "Data.AvatarServer": 1 } },
+        { $group: { _id: { ID: "$_id", Owner: "$Owner", Message: "$Message", Time: "$Time", Username: "$Data.Username", Avatar: "$Data.Avatar", Server: "$Data.AvatarServer" } } },
         { $limit: 8 } ]).toArray();
 
     for (const Person of PersonList)
@@ -36,7 +36,7 @@ PostRouter.post('/PostCommentList', Auth(), RateLimit(30, 60), async function(re
         const Count = await DB.collection("post_comment_like").find({ Comment: Person._id.ID }).count();
         const IsLike = await DB.collection("post_comment_like").find({ $and: [ { Comment: Person._id.ID }, { Owner: res.locals.ID } ] }).count();
 
-        Result.push({ ID: Person._id.ID, Message: Person._id.Message, Time: Person._id.Time, Count: Count, Like: IsLike !== 0, Username: Person._id.Username, Avatar: Avatar });
+        Result.push({ ID: Person._id.ID, Message: Person._id.Message, Owner: Person._id.Owner, Time: Person._id.Time, Count: Count, Like: IsLike !== 0, Username: Person._id.Username, Avatar: Avatar });
     }
 
     res.json({ Message: 0, Result: Result });

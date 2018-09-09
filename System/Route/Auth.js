@@ -503,6 +503,7 @@ AuthRouter.post('/SignInPhoneVerify', RateLimit(60, 60), function(req, res)
                 Avatar = Upload.ServerURL(result1.AvatarServer) + result1.Avatar;
 
             var Session = req.body.Session;
+            var IP = req.connection.remoteAddress;
 
             if (typeof Session === 'undefined' || Session === '')
                 Session = "Unknown Session - " + IP;

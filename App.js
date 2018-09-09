@@ -39,6 +39,9 @@ function(error, database)
     App.use('/', require('./System/Route/PostCommentLikeList'));
     App.use('/', require('./System/Route/PostCommentList'));
     App.use('/', require('./System/Route/PostDelete'));
+    App.use('/', require('./System/Route/PostDeleteCheck'));
+    App.use('/', require('./System/Route/PostDetail'));
+    App.use('/', require('./System/Route/PostEdit'));
     App.use('/', require('./System/Route/PostLike'));
     App.use('/', require('./System/Route/PostLikeList'));
     App.use('/', require('./System/Route/PostListInbox'));
@@ -46,8 +49,12 @@ function(error, database)
     App.use('/', require('./System/Route/PostVote'));
     App.use('/', require('./System/Route/PostWrite'));
 
+    App.use('/', require('./System/Route/ProfileAbout'));
     App.use('/', require('./System/Route/ProfileBlock'));
     App.use('/', require('./System/Route/ProfileFollow'));
+    App.use('/', require('./System/Route/ProfileLocation'));
+    App.use('/', require('./System/Route/ProfilePrivate'));
+    App.use('/', require('./System/Route/ProfileURL'));
 
     HTTP.listen(CoreConfig.PORT, "0.0.0.0", function()
     {

@@ -16,8 +16,12 @@
         "locutus": "^2.0.9",
         "mongodb": "^3.0.1",
         "nodemailer": "^4.4.1",
+        "npm": "^6.0.1",
         "request": "^2.83.0",
         "socket.io": "^2.0.4",
         "winston": "^2.4.0"
+    },
+    "devDependencies": {
+        "standard": "^11.0.1"
     }
 }
